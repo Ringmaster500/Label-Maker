@@ -769,12 +769,20 @@ export default function LabelWizard({
   const [step, setStep] = useState(1);
   const [name, setName] = useState('');
   const [isTemplateBase, setIsTemplateBase] = useState(false);
-  const [saveAsCopy, setSaveAsCopy] = useState(false);
   const [editorState, setEditorState] = useState<LabelState>(DEFAULT_STATE);
   
+  // Tracks if we opened from a Template Base ("use template" flow)
+  const [openedFromTemplateBase, setOpenedFromTemplateBase] = useState(false);
+
   // Filtering templates state
   const [searchQuery, setSearchQuery] = useState('');
   const [shapeFilter, setShapeFilter] = useState<'all' | 'circular' | 'square' | 'rectangular' | 'oval'>('all');
+
+  // Design panel active sub-tab (mobile)
+  const [designTab, setDesignTab] = useState<'background' | 'text'>('background');
+
+  // Aesthetic presets collapsed state
+  const [presetsOpen, setPresetsOpen] = useState(false);
   
   // Loading indicators
   const [uploading, setUploading] = useState(false);
@@ -785,20 +793,28 @@ export default function LabelWizard({
   useEffect(() => {
     if (activeDesign) {
       setName(activeDesign.name);
-      setIsTemplateBase(activeDesign.isTemplateBase);
+      // When opening a Template Base, we're using it (not editing it),
+      // so we start fresh (clear the name) and enter full edit mode
+      const fromBase = activeDesign.isTemplateBase;
+      setOpenedFromTemplateBase(fromBase);
+      setIsTemplateBase(false); // default: save result as a label project
       setEditorState({
         ...DEFAULT_STATE,
         ...activeDesign.state,
         templateId: activeDesign.templateId,
-        isTemplateBaseMode: activeDesign.isTemplateBase ? true : (activeDesign.state.isTemplateBaseMode ?? false),
+        // Never lock in template-base-mode when opened from the dashboard
+        isTemplateBaseMode: false,
       });
-      // Start directly on Step 3 (Customize Layout) when editing
-      setStep(3);
-      setSaveAsCopy(activeDesign.isTemplateBase);
+      if (fromBase) {
+        // Clear name so user picks a new one for their label
+        setName('');
+      }
+      // Start directly on Step 2 (Design) when editing
+      setStep(2);
     } else {
       setName('');
       setIsTemplateBase(false);
-      setSaveAsCopy(false);
+      setOpenedFromTemplateBase(false);
       setEditorState(DEFAULT_STATE);
       setStep(1);
     }
@@ -882,7 +898,10 @@ export default function LabelWizard({
     try {
       // Stripping temporary visualization settings from persistent state
       const { viewMode, showSafetyZone, ...persistentState } = editorState;
-      await onSave(name, isTemplateBase, persistentState, saveAsCopy);
+      // When opened from a template base: always save as a NEW label project (not overwrite template)
+      const saveAsNew = openedFromTemplateBase ? true : false;
+      const saveAsTemplateBase = openedFromTemplateBase ? false : isTemplateBase;
+      await onSave(name, saveAsTemplateBase, persistentState, saveAsNew);
       showAlert('Design Saved', 'Design successfully synced to your cloud account!');
     } catch (err: any) {
       showAlert('Save Error', 'Failed to save layout: ' + err.message);
@@ -980,20 +999,19 @@ export default function LabelWizard({
           </button>
           <div>
             <h1 className="text-xs font-bold tracking-wider text-[#9e8b89] uppercase">
-              {activeDesign ? 'EDIT LABEL DESIGN' : 'NEW LABEL DESIGN'}
+              {openedFromTemplateBase ? 'USE TEMPLATE' : (activeDesign ? 'EDIT LABEL DESIGN' : 'NEW LABEL DESIGN')}
             </h1>
             <p className="text-sm font-bold text-[#3c2f2f]">
               {step === 1 && 'Step 1: Choose Template'}
-              {step === 2 && 'Step 2: Choose Background'}
-              {step === 3 && 'Step 3: Customize Layout'}
-              {step === 4 && 'Step 4: Save & Print'}
+              {step === 2 && 'Step 2: Design Label'}
+              {step === 3 && 'Step 3: Save & Export'}
             </p>
           </div>
         </div>
 
-        {/* Stepper bubbles */}
+        {/* Stepper bubbles - 3 steps now */}
         <div className="hidden md:flex items-center gap-2">
-          {[1, 2, 3, 4].map((s) => (
+          {[1, 2, 3].map((s) => (
             <Fragment key={s}>
               <button 
                 type="button"
@@ -1008,7 +1026,7 @@ export default function LabelWizard({
               >
                 {step > s ? <Check className="w-3.5 h-3.5" /> : s}
               </button>
-              {s < 4 && <div className={`w-8 h-[1px] ${step > s ? 'bg-[#dfa283]' : 'bg-[#e2d6c9]'}`} />}
+              {s < 3 && <div className={`w-8 h-[1px] ${step > s ? 'bg-[#dfa283]' : 'bg-[#e2d6c9]'}`} />}
             </Fragment>
           ))}
         </div>
@@ -1087,210 +1105,183 @@ export default function LabelWizard({
               </div>
             )}
 
-            {/* -------------------- STEP 2: BACKGROUND -------------------- */}
+            {/* -------------------- STEP 2: DESIGN (Background + Text combined) -------------------- */}
             {step === 2 && (
-              <div className="space-y-5">
+              <div className="space-y-4">
                 <div className="space-y-1">
-                  <h3 className="text-sm font-bold text-[#3c2f2f]">Aesthetics & Background</h3>
-                  <p className="text-[11px] text-[#6d5c5a]">Configure label base colors and upload custom artwork backgrounds.</p>
+                  <h3 className="text-sm font-bold text-[#3c2f2f]">
+                    {openedFromTemplateBase ? 'Customize Your Label' : 'Design Label'}
+                  </h3>
+                  <p className="text-[11px] text-[#6d5c5a]">
+                    {openedFromTemplateBase
+                      ? 'Adjust the text content and styling for this label.'
+                      : 'Set background, artwork, and all text layers.'}
+                  </p>
                 </div>
 
-                {/* Base Background color */}
-                <div className="bg-[#faf6f2] border border-[#e2d6c9] p-4 rounded-2xl shadow-sm">
-                  <CustomColorPicker
-                    label="Background Fill Color"
-                    value={editorState.bgColor}
-                    onChange={(val) => handleStateChange('bgColor', val)}
-                  />
+                {/* Mobile sub-tabs */}
+                <div className="flex bg-[#faf6f2] p-0.5 rounded-xl border border-[#e2d6c9] shadow-inner lg:hidden">
+                  <button
+                    type="button"
+                    onClick={() => setDesignTab('background')}
+                    className={`flex-1 py-2 rounded-lg text-[11px] font-bold tracking-wide transition-all cursor-pointer ${
+                      designTab === 'background' ? 'bg-[#dfa283] text-white shadow-sm' : 'text-[#6d5c5a] hover:text-[#3c2f2f]'
+                    }`}
+                  >
+                    Background
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDesignTab('text')}
+                    className={`flex-1 py-2 rounded-lg text-[11px] font-bold tracking-wide transition-all cursor-pointer ${
+                      designTab === 'text' ? 'bg-[#dfa283] text-white shadow-sm' : 'text-[#6d5c5a] hover:text-[#3c2f2f]'
+                    }`}
+                  >
+                    Text Layers
+                  </button>
                 </div>
 
-                {/* Background Image dropzone */}
-                <div className="space-y-2">
-                  <label className="block text-xs font-semibold text-[#6d5c5a]">Background Artwork / Logo</label>
-                  
-                  {editorState.bgImageDataURL ? (
-                    <div className="p-4 bg-white border border-[#e2d6c9] rounded-2xl space-y-3.5 shadow-sm">
-                      <div className="flex items-center gap-3 bg-[#faf6f2] p-2.5 rounded-xl border border-[#e2d6c9]">
-                        <img 
-                          src={editorState.bgImageDataURL} 
-                          alt="Thumbnail" 
-                          className="w-12 h-12 object-contain bg-white border border-[#e2d6c9] rounded-lg shadow-sm"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-bold text-[#3c2f2f] truncate">Artwork Loaded</p>
-                          <p className="text-[10px] text-[#dfa283] font-semibold">Saved in Cloud Workspace</p>
-                        </div>
-                        <button
-                          onClick={handleRemoveImage}
-                          className="p-2 rounded-lg bg-white border border-[#e2d6c9] hover:border-rose-200 hover:bg-rose-50 text-[#6d5c5a] hover:text-rose-600 transition-all cursor-pointer shadow-sm"
-                          title="Remove Image"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
+                {/* Background Section - always visible on desktop, tab-gated on mobile */}
+                <div className={`space-y-4 ${designTab === 'text' ? 'hidden lg:block' : ''}` }>
+                  <h4 className="hidden lg:block text-[10px] font-extrabold tracking-widest text-[#9e8b89] uppercase">Background</h4>
 
-                      {/* Image Sliders */}
-                      <div className="space-y-4 border-t border-[#f4ebe1] pt-3.5">
-                        <CustomSlider
-                          label="Image Zoom Scale"
-                          value={editorState.bgScale}
-                          min={10}
-                          max={300}
-                          unit="%"
-                          snapValue={100}
-                          snapThreshold={4}
-                          onChange={(val) => handleStateChange('bgScale', val)}
-                        />
-                        <CustomSlider
-                          label="Image Horizontal Pos X"
-                          value={editorState.bgX}
-                          min={-50}
-                          max={150}
-                          unit="%"
-                          snapValue={50}
-                          snapThreshold={3}
-                          onChange={(val) => handleStateChange('bgX', val)}
-                        />
-                        <CustomSlider
-                          label="Image Vertical Pos Y"
-                          value={editorState.bgY}
-                          min={-50}
-                          max={150}
-                          unit="%"
-                          snapValue={50}
-                          snapThreshold={3}
-                          onChange={(val) => handleStateChange('bgY', val)}
-                        />
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="border-2 border-dashed border-[#e2d6c9] hover:border-[#dfa283] rounded-2xl p-6 text-center cursor-pointer transition-all bg-[#faf6f2]/40 group relative shadow-sm">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleImageFile}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                        disabled={uploading}
-                      />
-                      <div className="flex flex-col items-center justify-center space-y-2">
-                        <div className="p-3 rounded-2xl bg-white border border-[#e2d6c9] text-[#9e8b89] group-hover:text-[#dfa283] transition-colors shadow-sm">
-                          {uploading ? (
-                            <svg className="animate-spin h-5 w-5 text-[#dfa283]" fill="none" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                            </svg>
-                          ) : (
-                            <Upload className="w-5 h-5 group-hover:scale-105 transition-transform" />
-                          )}
-                        </div>
-                        <div className="text-xs text-[#6d5c5a] leading-relaxed">
-                          <span className="text-[#dfa283] font-bold">Click to select file</span> or drag image here<br />
-                          <span className="text-[10px] text-[#9e8b89]">Supports PNG, JPG, or WEBP. Uploads securely.</span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* -------------------- STEP 3: TEXT LAYERS -------------------- */}
-            {step === 3 && (
-              <div className="space-y-6 text-[#3c2f2f]">
-                {editorState.isTemplateBaseMode ? (
-                  <div className="space-y-4">
-                    {/* Locked Layout Card */}
-                    <div className="p-4 bg-[#dfa283]/10 border border-[#dfa283]/30 rounded-xl space-y-2.5">
-                      <div className="flex justify-between items-center">
-                        <span className="text-[9px] font-extrabold tracking-widest text-[#dfa283] uppercase">AESTHETIC BASE ACTIVE</span>
-                        <button
-                          onClick={() => handleStateChange('isTemplateBaseMode', false)}
-                          className="text-[10px] text-[#dfa283] hover:text-[#d48e6c] font-bold bg-white border border-[#dfa283]/30 px-2 py-1 rounded-lg transition-all cursor-pointer"
-                        >
-                          Unlock Layout
-                        </button>
-                      </div>
-                      <p className="text-[11px] text-[#6d5c5a] leading-normal">
-                        Layout styling, offsets, and fonts are locked. Customize the content fields below to create matching labels.
-                      </p>
-                    </div>
-
-                    {/* Quick Fields Card */}
-                    <div className="space-y-4 p-4 bg-white border border-[#e2d6c9] rounded-xl shadow-sm">
-                      {editorState.titleEnabled && (
-                        <div className="space-y-1">
-                          <label className="block text-xs font-semibold text-[#6d5c5a]">Product Title</label>
-                          <input
-                            type="text"
-                            value={editorState.titleText}
-                            onChange={(e) => handleStateChange('titleText', e.target.value)}
-                            className="w-full bg-[#faf6f2] border border-[#e2d6c9] rounded-lg px-3 py-2 text-xs text-[#3c2f2f] placeholder-[#9e8b89] focus:outline-none focus:ring-1 focus:ring-[#dfa283]"
-                          />
-                        </div>
-                      )}
-
-                      {editorState.subtitleEnabled && (
-                        <div className="space-y-1">
-                          <label className="block text-xs font-semibold text-[#6d5c5a]">Subtitle / Secondary Text</label>
-                          <input
-                            type="text"
-                            value={editorState.subtitleText}
-                            onChange={(e) => handleStateChange('subtitleText', e.target.value)}
-                            className="w-full bg-[#faf6f2] border border-[#e2d6c9] rounded-lg px-3 py-2 text-xs text-[#3c2f2f] placeholder-[#9e8b89] focus:outline-none focus:ring-1 focus:ring-[#dfa283]"
-                          />
-                        </div>
-                      )}
-
-                      {editorState.ingredientsEnabled && (
-                        <div className="space-y-1">
-                          <label className="block text-xs font-semibold text-[#6d5c5a]">Details / Ingredients List</label>
-                          <textarea
-                            value={editorState.ingredientsText}
-                            onChange={(e) => handleStateChange('ingredientsText', e.target.value)}
-                            className="w-full bg-[#faf6f2] border border-[#e2d6c9] rounded-lg px-3 py-2 text-xs text-[#3c2f2f] placeholder-[#9e8b89] h-24 resize-none focus:outline-none focus:ring-1 focus:ring-[#dfa283]"
-                          />
-                        </div>
-                      )}
-                    </div>
+                  {/* Base Background color */}
+                  <div className="bg-[#faf6f2] border border-[#e2d6c9] p-4 rounded-2xl shadow-sm">
+                    <CustomColorPicker
+                      label="Background Fill Color"
+                      value={editorState.bgColor}
+                      onChange={(val) => handleStateChange('bgColor', val)}
+                    />
                   </div>
-                ) : (
-                  <>
-                    {/* Unlocked Layout Card */}
-                    <div className="p-4 bg-[#faf6f2] border border-[#e2d6c9] rounded-xl space-y-2">
-                      <div className="flex justify-between items-center">
-                        <span className="text-[9px] font-extrabold tracking-widest text-[#6d5c5a] uppercase">DESIGN UNLOCKED</span>
-                        <button
-                          type="button"
-                          onClick={() => handleStateChange('isTemplateBaseMode', true)}
-                          className="text-[10px] text-[#dfa283] hover:text-[#d48e6c] font-bold bg-white border border-[#dfa283]/30 px-2 py-1 rounded-lg transition-all cursor-pointer shadow-xs focus:outline-none"
-                        >
-                          Lock Layout
-                        </button>
-                      </div>
-                      <p className="text-[10px] text-[#6d5c5a] leading-normal">
-                        Layout styling, fonts, and colors are currently editable. Click Lock Layout to simplify editing content.
-                      </p>
-                    </div>
 
-                    {/* Visual Presets */}
-                    <div className="space-y-2.5">
-                      <div className="flex items-center gap-1.5 text-[#dfa283]">
-                        <Sparkles className="w-4 h-4" />
-                        <h4 className="text-xs font-bold uppercase tracking-wider">Aesthetic Presets</h4>
+                  {/* Background Image dropzone */}
+                  <div className="space-y-2">
+                    <label className="block text-xs font-semibold text-[#6d5c5a]">Background Artwork / Logo</label>
+                    
+                    {editorState.bgImageDataURL ? (
+                      <div className="p-4 bg-white border border-[#e2d6c9] rounded-2xl space-y-3.5 shadow-sm">
+                        <div className="flex items-center gap-3 bg-[#faf6f2] p-2.5 rounded-xl border border-[#e2d6c9]">
+                          <img 
+                            src={editorState.bgImageDataURL} 
+                            alt="Thumbnail" 
+                            className="w-12 h-12 object-contain bg-white border border-[#e2d6c9] rounded-lg shadow-sm"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-bold text-[#3c2f2f] truncate">Artwork Loaded</p>
+                            <p className="text-[10px] text-[#dfa283] font-semibold">Saved in Cloud Workspace</p>
+                          </div>
+                          <button
+                            onClick={handleRemoveImage}
+                            className="p-2 rounded-lg bg-white border border-[#e2d6c9] hover:border-rose-200 hover:bg-rose-50 text-[#6d5c5a] hover:text-rose-600 transition-all cursor-pointer shadow-sm"
+                            title="Remove Image"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+
+                        {/* Image Sliders */}
+                        <div className="space-y-4 border-t border-[#f4ebe1] pt-3.5">
+                          <CustomSlider
+                            label="Image Zoom Scale"
+                            value={editorState.bgScale}
+                            min={10}
+                            max={300}
+                            unit="%"
+                            snapValue={100}
+                            snapThreshold={4}
+                            onChange={(val) => handleStateChange('bgScale', val)}
+                          />
+                          <CustomSlider
+                            label="Image Horizontal Pos X"
+                            value={editorState.bgX}
+                            min={-50}
+                            max={150}
+                            unit="%"
+                            snapValue={50}
+                            snapThreshold={3}
+                            onChange={(val) => handleStateChange('bgX', val)}
+                          />
+                          <CustomSlider
+                            label="Image Vertical Pos Y"
+                            value={editorState.bgY}
+                            min={-50}
+                            max={150}
+                            unit="%"
+                            snapValue={50}
+                            snapThreshold={3}
+                            onChange={(val) => handleStateChange('bgY', val)}
+                          />
+                        </div>
                       </div>
-                      <div className="grid grid-cols-2 gap-2">
+                    ) : (
+                      <div className="border-2 border-dashed border-[#e2d6c9] hover:border-[#dfa283] rounded-2xl p-6 text-center cursor-pointer transition-all bg-[#faf6f2]/40 group relative shadow-sm">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageFile}
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                          disabled={uploading}
+                        />
+                        <div className="flex flex-col items-center justify-center space-y-2">
+                          <div className="p-3 rounded-2xl bg-white border border-[#e2d6c9] text-[#9e8b89] group-hover:text-[#dfa283] transition-colors shadow-sm">
+                            {uploading ? (
+                              <svg className="animate-spin h-5 w-5 text-[#dfa283]" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                              </svg>
+                            ) : (
+                              <Upload className="w-5 h-5 group-hover:scale-105 transition-transform" />
+                            )}
+                          </div>
+                          <div className="text-xs text-[#6d5c5a] leading-relaxed">
+                            <span className="text-[#dfa283] font-bold">Click to select file</span> or drag image here<br />
+                            <span className="text-[10px] text-[#9e8b89]">Supports PNG, JPG, or WEBP. Uploads securely.</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Divider (desktop only) */}
+                <div className="hidden lg:block h-px bg-[#e2d6c9]" />
+
+            {/* Text Layers Section - always visible on desktop, tab-gated on mobile */}
+              <div className={`space-y-6 text-[#3c2f2f] ${designTab === 'background' ? 'hidden lg:block' : ''}` }>
+                  {/* Text section header (desktop only) */}
+                  <h4 className="hidden lg:block text-[10px] font-extrabold tracking-widest text-[#9e8b89] uppercase">Text Layers</h4>
+
+                  {/* Aesthetic Presets - collapsible */}
+                  <div className="bg-white border border-[#e2d6c9] rounded-xl shadow-sm overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => setPresetsOpen(v => !v)}
+                      className="w-full flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-[#faf6f2] transition-colors"
+                    >
+                      <span className="flex items-center gap-1.5 text-xs font-bold text-[#3c2f2f]">
+                        <Sparkles className="w-3.5 h-3.5 text-[#dfa283]" />
+                        Aesthetic Presets
+                      </span>
+                      <span className="text-[10px] text-[#9e8b89]">{presetsOpen ? '▲' : '▼'}</span>
+                    </button>
+                    {presetsOpen && (
+                      <div className="grid grid-cols-2 gap-2 px-4 pb-4 border-t border-[#f4ebe1] pt-3">
                         {PRESETS.map(p => (
                           <button
                             key={p.id}
                             onClick={() => applyPreset(p.config)}
-                            className="px-3 py-2 rounded-xl bg-white border border-[#e2d6c9] hover:border-[#dfa283]/50 hover:bg-[#faf6f2] text-left transition-all cursor-pointer shadow-sm"
+                            className="px-3 py-2 rounded-xl bg-[#faf6f2] border border-[#e2d6c9] hover:border-[#dfa283]/50 hover:bg-[#f4ebe1] text-left transition-all cursor-pointer"
                           >
                             <p className="text-[11px] font-bold text-[#3c2f2f]">{p.name}</p>
                             <p className="text-[9px] text-[#9e8b89] mt-0.5 capitalize truncate">{p.config.titleFont.split(' ')[0]} font</p>
                           </button>
                         ))}
                       </div>
-                    </div>
+                    )}
+                  </div>
+
+                  {/*  always show full text layer editor  */}
+                  <>
 
                     {/* 1. Title Layer */}
                     <div className="space-y-3 bg-white border border-[#e2d6c9] p-4 rounded-xl shadow-sm">
@@ -1577,113 +1568,112 @@ export default function LabelWizard({
                       showAlert={showAlert}
                     />
                   </>
-                )}
+                </div>
+
               </div>
             )}
 
-            {/* -------------------- STEP 4: REVIEW & PRINT -------------------- */}
-            {step === 4 && (
+            {/* -------------------- STEP 3: REVIEW & SAVE -------------------- */}
+            {step === 3 && (
               <div className="space-y-5 text-[#3c2f2f]">
                 <div className="space-y-1">
-                  <h3 className="text-sm font-bold text-[#3c2f2f]">Save & Export PDF</h3>
-                  <p className="text-[11px] text-[#6d5c5a]">Specify design meta and download print-ready grid matrix PDF.</p>
+                  <h3 className="text-sm font-bold text-[#3c2f2f]">Save & Export</h3>
+                  <p className="text-[11px] text-[#6d5c5a]">
+                  {openedFromTemplateBase
+                    ? `Name your label and save it to your library, or export directly to PDF.`
+                    : `Specify design meta and download print-ready grid matrix PDF.`}
+                </p>
                 </div>
 
-                {/* Name design */}
+                {/* Name input - always shown */}
                 <div className="space-y-2 bg-white border border-[#e2d6c9] p-4 rounded-xl shadow-sm">
                   <div>
-                    <label className="block text-xs font-semibold text-[#6d5c5a] mb-1">Design Name</label>
+                    <label className="block text-xs font-semibold text-[#6d5c5a] mb-1">
+                      {openedFromTemplateBase ? 'Label Name' : 'Design Name'}
+                    </label>
                     <input
                       type="text"
-                      placeholder="e.g. Lavender Soap Label"
+                      placeholder={openedFromTemplateBase ? 'e.g. Lavender Soap – Batch 3' : 'e.g. Lavender Soap Label'}
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       className="w-full bg-[#faf6f2] border border-[#e2d6c9] rounded-lg px-3 py-2 text-xs text-[#3c2f2f] placeholder-[#9e8b89] focus:outline-none focus:ring-1 focus:ring-[#dfa283]"
                     />
                   </div>
 
-                  <div className="flex flex-col gap-2.5 pt-1.5 mt-2">
-                    {/* Save as a Template Base Custom Checkbox */}
+                  {/* Template base flow: show only "Save as Label" */}
+                  {openedFromTemplateBase ? (
                     <button
-                      type="button"
-                      onClick={() => setIsTemplateBase(!isTemplateBase)}
-                      className="text-[11px] text-[#6d5c5a] cursor-pointer select-none flex items-center gap-2 focus:outline-none"
+                      onClick={handleSaveToLibrary}
+                      disabled={saving}
+                      className="w-full bg-[#dfa283] hover:bg-[#d48e6c] text-white py-2.5 rounded-lg text-xs font-bold tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm mt-3 disabled:opacity-60"
                     >
-                      <div className={`w-4.5 h-4.5 rounded-md border flex items-center justify-center transition-all ${
-                        isTemplateBase
-                          ? 'bg-[#dfa283] border-[#dfa283] text-white shadow-sm shadow-[#dfa283]/20'
-                          : 'bg-white border-[#e2d6c9] text-transparent hover:border-[#dfa283]/60'
-                      }`}>
-                        <Check className={`w-3.5 h-3.5 stroke-[3px] transition-transform ${isTemplateBase ? 'scale-100' : 'scale-0'}`} />
-                      </div>
-                      Save as a "Template Base"
+                      {saving ? (
+                        <>
+                          <svg className="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                          </svg>
+                          Saving Label...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="w-3.5 h-3.5" /> SAVE AS LABEL
+                        </>
+                      )}
                     </button>
-
-                    {/* Save as a new copy Custom Checkbox (Editing Mode only) */}
-                    {activeDesign && (
-                      <div className="flex flex-col gap-1 border-t border-[#f4ebe1] pt-2">
+                  ) : (
+                    <>
+                      {/* Full flow: template base checkbox + save button */}
+                      <div className="flex flex-col gap-2.5 pt-1.5 mt-2">
                         <button
                           type="button"
-                          onClick={() => {
-                            setSaveAsCopy(!saveAsCopy);
-                            // If saving as copy, default isTemplateBase to false (since they are likely saving a variant product label)
-                            if (!saveAsCopy) {
-                              setIsTemplateBase(false);
-                            }
-                          }}
+                          onClick={() => setIsTemplateBase(!isTemplateBase)}
                           className="text-[11px] text-[#6d5c5a] cursor-pointer select-none flex items-center gap-2 focus:outline-none"
                         >
                           <div className={`w-4.5 h-4.5 rounded-md border flex items-center justify-center transition-all ${
-                            saveAsCopy
+                            isTemplateBase
                               ? 'bg-[#dfa283] border-[#dfa283] text-white shadow-sm shadow-[#dfa283]/20'
                               : 'bg-white border-[#e2d6c9] text-transparent hover:border-[#dfa283]/60'
                           }`}>
-                            <Check className={`w-3.5 h-3.5 stroke-[3px] transition-transform ${saveAsCopy ? 'scale-100' : 'scale-0'}`} />
+                            <Check className={`w-3.5 h-3.5 stroke-[3px] transition-transform ${isTemplateBase ? 'scale-100' : 'scale-0'}`} />
                           </div>
-                          Save as a new copy (don't overwrite original)
+                          Save as a "Template Base"
                         </button>
-                        
-                        {activeDesign.isTemplateBase && saveAsCopy && (
-                          <p className="text-[10px] text-[#dfa283] font-semibold leading-relaxed pl-6.5">
-                            * Recommended: Starting from a template base will save a new label project variant by default.
-                          </p>
-                        )}
+                        <p className="text-[10px] text-[#9e8b89] leading-relaxed">
+                          Template bases save your background and layout as a reusable starting point.
+                        </p>
                       </div>
-                    )}
-                  </div>
 
-                  <p className="text-[10px] text-[#9e8b89] leading-relaxed mt-1">
-                    *Template bases lock the text formatting, background image, and offsets, providing a quick editor form for generating content variants in the editor later.
-                  </p>
-
-                  <button
-                    onClick={handleSaveToLibrary}
-                    disabled={saving}
-                    className="w-full bg-[#dfa283] hover:bg-[#d48e6c] text-white py-2.5 rounded-lg text-xs font-bold tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm mt-3"
-                  >
-                    {saving ? (
-                      <>
-                        <svg className="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                        </svg>
-                        Syncing to Cloud...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="w-3.5 h-3.5" /> SAVE TO MY HUB
-                      </>
-                    )}
-                  </button>
+                      <button
+                        onClick={handleSaveToLibrary}
+                        disabled={saving}
+                        className="w-full bg-[#dfa283] hover:bg-[#d48e6c] text-white py-2.5 rounded-lg text-xs font-bold tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm mt-3"
+                      >
+                        {saving ? (
+                          <>
+                            <svg className="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                            </svg>
+                            Syncing to Cloud...
+                          </>
+                        ) : (
+                          <>
+                            <Save className="w-3.5 h-3.5" /> SAVE TO MY HUB
+                          </>
+                        )}
+                      </button>
+                    </>
+                  )}
                 </div>
 
-                {/* Print PDF Card */}
+                {/* Export PDF card - always shown */}
                 <div className="space-y-3 bg-[#faf6f2] border border-[#e2d6c9] p-4 rounded-xl shadow-sm">
                   <div className="space-y-1">
-                    <span className="text-[9px] font-extrabold tracking-widest text-[#dfa283] uppercase">Export Output</span>
-                    <h4 className="text-xs font-bold text-[#3c2f2f]">Generate Avery Sheet PDF</h4>
+                    <span className="text-[9px] font-extrabold tracking-widest text-[#dfa283] uppercase">Print Ready</span>
+                    <h4 className="text-xs font-bold text-[#3c2f2f]">Export PDF Sheet</h4>
                     <p className="text-[10px] text-[#6d5c5a] leading-normal">
-                      Compiles a 300 DPI high-resolution page matrix conforming exactly to standard {selectedTemplate.name} dimensions.
+                      Downloads a full {selectedTemplate.name} sheet at 300 DPI — ready to print.
                     </p>
                   </div>
 
@@ -1695,14 +1685,14 @@ export default function LabelWizard({
                     {exporting ? (
                       <>
                         <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                         </svg>
                         Compiling 300 DPI PDF...
                       </>
                     ) : (
                       <>
-                        <Printer className="w-4 h-4" /> EXPORT & PRINT PDF
+                        <Printer className="w-4 h-4" /> EXPORT PDF SHEET
                       </>
                     )}
                   </button>
@@ -1722,7 +1712,7 @@ export default function LabelWizard({
               Back
             </button>
             
-            {step < 4 ? (
+            {step < 3 ? (
               <button
                 onClick={() => setStep(step + 1)}
                 className="px-4 py-2 rounded-xl bg-[#dfa283] hover:bg-[#d48e6c] text-white text-xs font-bold tracking-wide transition-all flex items-center gap-1 cursor-pointer shadow-sm"
@@ -1850,9 +1840,9 @@ export default function LabelWizard({
                   template={selectedTemplate} 
                   state={{
                     ...editorState,
-                    titleEnabled: step >= 3 ? editorState.titleEnabled : false,
-                    subtitleEnabled: step >= 3 ? editorState.subtitleEnabled : false,
-                    ingredientsEnabled: step >= 3 ? editorState.ingredientsEnabled : false
+                    titleEnabled: step >= 2 ? editorState.titleEnabled : false,
+                    subtitleEnabled: step >= 2 ? editorState.subtitleEnabled : false,
+                    ingredientsEnabled: step >= 2 ? editorState.ingredientsEnabled : false
                   }}
                 />
               </div>

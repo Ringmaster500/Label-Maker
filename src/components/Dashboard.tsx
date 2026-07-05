@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Plus, Search, LogOut, Calendar, Trash2, Edit3, Copy, Library, Layout } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { Plus, Search, LogOut, Calendar, Trash2, Edit3, Copy, Library, Layout, MoreVertical } from 'lucide-react';
 import { SavedDesign, UserSession } from '../types';
 import { templates } from '../templates';
 import StudioCanvas from './StudioCanvas';
@@ -13,6 +13,71 @@ interface DashboardProps {
   onDeleteDesign: (id: string) => void;
   onDuplicateDesign: (design: SavedDesign) => void;
   showConfirm: (title: string, message: string) => Promise<boolean>;
+}
+
+// ==================== CARD DROPDOWN MENU ====================
+function CardMenu({
+  design,
+  onEdit,
+  onDuplicate,
+  onDelete,
+}: {
+  design: SavedDesign;
+  onEdit: () => void;
+  onDuplicate: () => void;
+  onDelete: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handle = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handle);
+    return () => document.removeEventListener('mousedown', handle);
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={(e) => { e.stopPropagation(); setOpen(v => !v); }}
+        className="w-7 h-7 rounded-lg flex items-center justify-center bg-white/80 backdrop-blur-sm border border-[#e2d6c9] hover:bg-white hover:border-[#dfa283]/50 text-[#9e8b89] hover:text-[#3c2f2f] transition-all cursor-pointer shadow-sm"
+        title="More options"
+      >
+        <MoreVertical className="w-3.5 h-3.5" />
+      </button>
+
+      {open && (
+        <div className="absolute right-0 top-8 w-36 bg-white border border-[#e2d6c9] rounded-xl shadow-xl z-50 overflow-hidden py-1">
+          <button
+            onClick={(e) => { e.stopPropagation(); setOpen(false); onEdit(); }}
+            className="w-full flex items-center gap-2.5 px-3 py-2 text-[11px] font-semibold text-[#3c2f2f] hover:bg-[#faf6f2] cursor-pointer transition-colors"
+          >
+            <Edit3 className="w-3.5 h-3.5 text-[#dfa283]" />
+            {design.isTemplateBase ? 'Edit Template' : 'Edit Label'}
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); setOpen(false); onDuplicate(); }}
+            className="w-full flex items-center gap-2.5 px-3 py-2 text-[11px] font-semibold text-[#3c2f2f] hover:bg-[#faf6f2] cursor-pointer transition-colors"
+          >
+            <Copy className="w-3.5 h-3.5 text-[#9e8b89]" />
+            Duplicate
+          </button>
+          <div className="h-px bg-[#f4ebe1] my-1" />
+          <button
+            onClick={(e) => { e.stopPropagation(); setOpen(false); onDelete(); }}
+            className="w-full flex items-center gap-2.5 px-3 py-2 text-[11px] font-semibold text-rose-600 hover:bg-rose-50 cursor-pointer transition-colors"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            Delete
+          </button>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function Dashboard({
@@ -82,30 +147,10 @@ export default function Dashboard({
       </header>
 
       {/* Main Workspace Dashboard Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-6 md:p-8 space-y-8">
-        
-        {/* Welcome CTA Area */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white border border-[#e2d6c9] p-6 md:p-8 rounded-2xl relative overflow-hidden shadow-sm">
-          <div className="absolute -right-16 -top-16 w-48 h-48 bg-[#dfa283]/5 rounded-full blur-[80px] pointer-events-none" />
-          
-          <div className="space-y-2 max-w-xl">
-            <h2 className="text-2xl font-bold tracking-tight text-[#3c2f2f]">Create Beautiful Labels in Minutes</h2>
-            <p className="text-sm text-[#6d5c5a] leading-relaxed">
-              Design professional templates compatible with standard Avery sheets. Save your layout parameters, upload background artwork, and export high-res PDFs.
-            </p>
-          </div>
-
-          <button
-            onClick={onNewDesign}
-            className="flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-[#dfa283] hover:bg-[#d48e6c] text-white font-bold text-sm tracking-wide shadow-md shadow-[#dfa283]/10 hover:shadow-[#dfa283]/20 hover:scale-[1.02] active:scale-[0.98] transition-all shrink-0 cursor-pointer"
-          >
-            <Plus className="w-5 h-5" />
-            NEW LABEL DESIGN
-          </button>
-        </div>
+      <main className="flex-1 max-w-7xl w-full mx-auto p-6 md:p-8 space-y-6 pb-24">
 
         {/* Dashboard Catalog Controls */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-[#e2d6c9] pb-5">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           
           {/* Tab Categories */}
           <div className="bg-white p-1 rounded-xl border border-[#e2d6c9] inline-flex w-full sm:w-auto shadow-sm">
@@ -117,7 +162,7 @@ export default function Dashboard({
                   : 'text-[#6d5c5a] hover:text-[#3c2f2f]'
               }`}
             >
-              All Designs ({savedDesigns.length})
+              All ({savedDesigns.length})
             </button>
             <button
               onClick={() => setFilterType('project')}
@@ -158,7 +203,7 @@ export default function Dashboard({
 
         {/* Library Grid Catalog */}
         {filteredDesigns.length === 0 ? (
-          <div className="bg-white border border-[#e2d6c9] text-center py-16 px-6 rounded-2xl flex flex-col items-center shadow-sm">
+          <div className="bg-white border border-[#e2d6c9] text-center py-20 px-6 rounded-2xl flex flex-col items-center shadow-sm">
             <div className="w-14 h-14 rounded-2xl bg-[#faf6f2] border border-[#e2d6c9] flex items-center justify-center text-[#9e8b89] mb-4">
               <Library className="w-6 h-6 opacity-80" />
             </div>
@@ -166,22 +211,22 @@ export default function Dashboard({
             <p className="text-xs text-[#6d5c5a] max-w-sm">
               {searchQuery 
                 ? "No saved designs match your query. Try clearing the filter or searching for another stock number." 
-                : "Your design library is currently empty. Click 'New Label Design' above to start your first layout."}
+                : "Your design library is empty. Click the + button to create your first label."}
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
             {filteredDesigns.map(design => {
               const template = templates.find(t => t.id === design.templateId) || templates[0];
               const aspect = template.width / template.height;
-              // Calculate thumbnail bounding dimensions in px
               const thumbW = aspect >= 1 ? 160 : 160 * aspect;
               const thumbH = aspect >= 1 ? 160 / aspect : 160;
 
               return (
                 <div 
                   key={design.id} 
-                  className="bg-white border border-[#e2d6c9] rounded-2xl overflow-hidden hover:border-[#dfa283]/60 hover:shadow-lg transition-all flex flex-col group shadow-sm"
+                  className="bg-white border border-[#e2d6c9] rounded-2xl overflow-hidden hover:border-[#dfa283]/60 hover:shadow-lg transition-all flex flex-col group shadow-sm cursor-pointer"
+                  onClick={() => onLoadDesign(design)}
                 >
                   {/* Canvas Thumbnail Preview Container */}
                   <div className="h-48 bg-[#faf6f2] border-b border-[#e2d6c9] flex items-center justify-center p-4 relative overflow-hidden">
@@ -214,10 +259,26 @@ export default function Dashboard({
                         </span>
                       )}
                     </div>
+
+                    {/* 3-dot menu top-right */}
+                    <div className="absolute top-3 right-3">
+                      <CardMenu
+                        design={design}
+                        onEdit={() => onLoadDesign(design)}
+                        onDuplicate={() => onDuplicateDesign(design)}
+                        onDelete={async () => {
+                          const confirmed = await showConfirm(
+                            'Delete Design',
+                            `Are you sure you want to delete "${design.name}"? This action cannot be undone.`
+                          );
+                          if (confirmed) onDeleteDesign(design.id);
+                        }}
+                      />
+                    </div>
                   </div>
 
                   {/* Card Content Details */}
-                  <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
+                  <div className="p-4 flex-1 flex flex-col justify-between">
                     <div>
                       <h4 className="text-sm font-bold text-[#3c2f2f] truncate group-hover:text-[#dfa283] transition-colors" title={design.name}>
                         {design.name}
@@ -227,43 +288,14 @@ export default function Dashboard({
                       </p>
                     </div>
 
-                    <div className="pt-3 border-t border-[#f4ebe1] flex items-center justify-between text-[10px] text-[#9e8b89]">
+                    <div className="pt-3 mt-2 border-t border-[#f4ebe1] flex items-center justify-between text-[10px] text-[#9e8b89]">
                       <span className="flex items-center gap-1">
                         <Calendar className="w-3 h-3" />
                         {formatDate(design.updatedAt || design.createdAt)}
                       </span>
-                    </div>
-
-                    {/* Hover Actions Overlays */}
-                    <div className="flex items-center gap-1.5 pt-1">
-                      <button
-                        onClick={() => onLoadDesign(design)}
-                        className="flex-1 flex items-center justify-center gap-1 px-2.5 py-2 rounded-lg bg-[#dfa283] hover:bg-[#d48e6c] text-white text-[11px] font-semibold transition-all cursor-pointer"
-                      >
-                        <Edit3 className="w-3 h-3" /> Edit
-                      </button>
-                      <button
-                        onClick={() => onDuplicateDesign(design)}
-                        className="p-2 rounded-lg bg-[#faf6f2] border border-[#e2d6c9] hover:bg-[#f4ebe1] text-[#6d5c5a] hover:text-[#3c2f2f] transition-all cursor-pointer"
-                        title="Duplicate Design"
-                      >
-                        <Copy className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        onClick={async () => {
-                          const confirmed = await showConfirm(
-                            'Delete Design',
-                            `Are you sure you want to delete "${design.name}"? This action cannot be undone.`
-                          );
-                          if (confirmed) {
-                            onDeleteDesign(design.id);
-                          }
-                        }}
-                        className="p-2 rounded-lg bg-[#faf6f2] border border-[#e2d6c9] hover:border-rose-200 hover:bg-rose-50 text-[#6d5c5a] hover:text-rose-600 transition-all cursor-pointer"
-                        title="Delete Design"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                      <span className="text-[10px] text-[#dfa283] font-semibold">
+                        {design.isTemplateBase ? 'Use Template →' : 'Open →'}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -272,6 +304,19 @@ export default function Dashboard({
           </div>
         )}
       </main>
+
+      {/* Floating Action Button - New Label */}
+      <button
+        onClick={onNewDesign}
+        className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full bg-[#dfa283] hover:bg-[#d48e6c] text-white shadow-xl shadow-[#dfa283]/30 hover:shadow-[#dfa283]/50 hover:scale-110 active:scale-95 transition-all cursor-pointer flex items-center justify-center group"
+        title="New Label Design"
+      >
+        <Plus className="w-6 h-6 group-hover:rotate-90 transition-transform duration-200" />
+        {/* Tooltip */}
+        <span className="absolute right-16 bg-[#3c2f2f] text-white text-[11px] font-semibold px-2.5 py-1.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none shadow-lg">
+          New Label
+        </span>
+      </button>
     </div>
   );
 }
