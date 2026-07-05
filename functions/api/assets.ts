@@ -71,7 +71,18 @@ export const onRequest: PagesFunction<Env> = async (context) => {
         );
       }
 
-      if (!file.type.startsWith('image/')) {
+      if (typeof file === 'string') {
+        return new Response(
+          JSON.stringify({ error: 'Uploaded item is not a file.' }),
+          { status: 400, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const fileType = file.type || '';
+      const fileName = file.name || '';
+      const isImage = fileType.startsWith('image/') || /\.(jpg|jpeg|png|webp|gif)$/i.test(fileName);
+
+      if (!isImage) {
         return new Response(
           JSON.stringify({ error: 'Invalid file type. Only image files are allowed.' }),
           { status: 400, headers: { 'Content-Type': 'application/json' } }
@@ -79,14 +90,14 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       }
 
       const buffer = await file.arrayBuffer();
-      const ext = file.name.split('.').pop() || 'png';
+      const ext = fileName.split('.').pop() || 'png';
       const fileId = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
       const key = `assets/${user.email}/${fileId}.${ext}`;
 
       // Upload to R2
       await env.AUTO_LABELS_R2.put(key, buffer, {
         httpMetadata: {
-          contentType: file.type,
+          contentType: file.type || 'image/png',
           cacheControl: 'public, max-age=604800'
         }
       });
