@@ -1,5 +1,7 @@
 name = "avery-label-studio"
 pages_build_output_dir = "dist"
+compatibility_date = "2026-07-05"
+compatibility_flags = ["formdata_parser_supports_files"]
 
 [vars]
 JWT_SECRET = "local-secret-key-1234567890-qwertyuiop-super-long"
