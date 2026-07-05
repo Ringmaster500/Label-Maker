@@ -12,6 +12,7 @@ import { drawLabel } from '../utils/canvasEngine';
 
 interface LabelWizardProps {
   activeDesign: SavedDesign | null;
+  editTemplateMode?: boolean;
   onSave: (
     name: string, 
     isTemplateBase: boolean, 
@@ -898,6 +899,7 @@ const DEFAULT_STATE: LabelState = {
 
 export default function LabelWizard({
   activeDesign,
+  editTemplateMode = false,
   onSave,
   onBackToDashboard,
   token,
@@ -935,19 +937,29 @@ export default function LabelWizard({
       setName(activeDesign.name);
       // When opening a Template Base, we're using it (not editing it),
       // so we start fresh (clear the name) and enter full edit mode
+      // BUT if editTemplateMode is true, we ARE editing the template base!
       const fromBase = activeDesign.isTemplateBase;
-      setOpenedFromTemplateBase(fromBase);
-      setIsTemplateBase(false); // default: save result as a label project
-      setEditorState({
-        ...DEFAULT_STATE,
-        ...activeDesign.state,
-        templateId: activeDesign.templateId,
-        // Never lock in template-base-mode when opened from the dashboard
-        isTemplateBaseMode: false,
-      });
-      if (fromBase) {
+      const isUsingTemplate = fromBase && !editTemplateMode;
+      setOpenedFromTemplateBase(isUsingTemplate);
+      
+      if (isUsingTemplate) {
+        setIsTemplateBase(false); // default: save result as a label project
+        setEditorState({
+          ...DEFAULT_STATE,
+          ...activeDesign.state,
+          templateId: activeDesign.templateId,
+          isTemplateBaseMode: false,
+        });
         // Clear name so user picks a new one for their label
         setName('');
+      } else {
+        setIsTemplateBase(fromBase); // preserve template base status if editing template base
+        setEditorState({
+          ...DEFAULT_STATE,
+          ...activeDesign.state,
+          templateId: activeDesign.templateId,
+          isTemplateBaseMode: fromBase,
+        });
       }
       // Start directly on Step 2 (Design) when editing
       setStep(2);
@@ -958,7 +970,7 @@ export default function LabelWizard({
       setEditorState(DEFAULT_STATE);
       setStep(1);
     }
-  }, [activeDesign]);
+  }, [activeDesign, editTemplateMode]);
 
   const selectedTemplate = templates.find(t => t.id === editorState.templateId) || templates[0];
 
@@ -1139,7 +1151,11 @@ export default function LabelWizard({
           </button>
           <div>
             <h1 className="text-xs font-bold tracking-wider text-[#9e8b89] uppercase">
-              {openedFromTemplateBase ? 'USE TEMPLATE' : (activeDesign ? 'EDIT LABEL DESIGN' : 'NEW LABEL DESIGN')}
+              {openedFromTemplateBase 
+                ? 'USE TEMPLATE' 
+                : (activeDesign 
+                  ? (activeDesign.isTemplateBase ? 'EDIT TEMPLATE BASE' : 'EDIT LABEL DESIGN') 
+                  : 'NEW LABEL DESIGN')}
             </h1>
             <p className="text-sm font-bold text-[#3c2f2f]">
               {step === 1 && 'Step 1: Choose Template'}
@@ -1263,12 +1279,6 @@ export default function LabelWizard({
                 {/* ===== TEMPLATE BASE: content-only form ===== */}
                 {openedFromTemplateBase ? (
                   <div className="space-y-4">
-                    <div className="flex items-center gap-2 p-3 bg-[#dfa283]/10 border border-[#dfa283]/25 rounded-xl">
-                      <div className="w-2 h-2 rounded-full bg-[#dfa283] shrink-0" />
-                      <p className="text-[11px] text-[#dfa283] font-semibold leading-snug">
-                        Template styling is locked — just enter your product text below.
-                      </p>
-                    </div>
 
                     {editorState.titleEnabled && (
                       <div className="bg-white border border-[#e2d6c9] p-4 rounded-xl shadow-sm space-y-1.5">

@@ -9,7 +9,7 @@ interface DashboardProps {
   savedDesigns: SavedDesign[];
   onLogout: () => void;
   onNewDesign: () => void;
-  onLoadDesign: (design: SavedDesign) => void;
+  onLoadDesign: (design: SavedDesign, editTemplate?: boolean) => void;
   onDeleteDesign: (id: string) => void;
   onDuplicateDesign: (design: SavedDesign) => void;
   showConfirm: (title: string, message: string) => Promise<boolean>;
@@ -226,7 +226,7 @@ export default function Dashboard({
                 <div 
                   key={design.id} 
                   className="bg-white border border-[#e2d6c9] rounded-2xl overflow-hidden hover:border-[#dfa283]/60 hover:shadow-lg transition-all flex flex-col group shadow-sm cursor-pointer"
-                  onClick={() => onLoadDesign(design)}
+                  onClick={() => onLoadDesign(design, false)}
                 >
                   {/* Canvas Thumbnail Preview Container */}
                   <div className="h-48 bg-[#faf6f2] border-b border-[#e2d6c9] flex items-center justify-center p-4 relative overflow-hidden">
@@ -264,7 +264,7 @@ export default function Dashboard({
                     <div className="absolute top-3 right-3">
                       <CardMenu
                         design={design}
-                        onEdit={() => onLoadDesign(design)}
+                        onEdit={() => onLoadDesign(design, true)}
                         onDuplicate={() => onDuplicateDesign(design)}
                         onDelete={async () => {
                           const confirmed = await showConfirm(

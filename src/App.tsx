@@ -10,6 +10,7 @@ export default function App() {
   const [view, setView] = useState<'login' | 'dashboard' | 'wizard'>('login');
   const [savedDesigns, setSavedDesigns] = useState<SavedDesign[]>([]);
   const [activeDesign, setActiveDesign] = useState<SavedDesign | null>(null);
+  const [editTemplateMode, setEditTemplateMode] = useState(false);
   const [checkingSession, setCheckingSession] = useState(true);
 
   // Custom modal dialog system
@@ -216,13 +217,15 @@ export default function App() {
     }
   };
 
-  const handleLoadDesign = (design: SavedDesign) => {
+  const handleLoadDesign = (design: SavedDesign, editTemplate: boolean = false) => {
     setActiveDesign(design);
+    setEditTemplateMode(editTemplate);
     setView('wizard');
   };
 
   const handleNewDesign = () => {
     setActiveDesign(null);
+    setEditTemplateMode(false);
     setView('wizard');
   };
 
@@ -261,6 +264,7 @@ export default function App() {
       {view === 'wizard' && session && (
         <LabelWizard
           activeDesign={activeDesign}
+          editTemplateMode={editTemplateMode}
           onSave={handleSaveDesign}
           onBackToDashboard={() => {
             setActiveDesign(null);
