@@ -1,0 +1,1971 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Avery Label Studio</title>
+  
+  <!-- Tailwind CSS v3 CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            serif: ['Playfair Display', 'serif'],
+            script: ['Great Vibes', 'cursive'],
+            cinzel: ['Cinzel', 'serif'],
+            alexandria: ['Alexandria', 'sans-serif'],
+          },
+        },
+      },
+    }
+  </script>
+
+  <!-- Google Fonts: Inter, Playfair Display, Great Vibes, Cinzel, Alexandria -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700&family=Cinzel:wght@400;600;700&family=Great+Vibes&family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- jsPDF v2.5.1 CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <style>
+    /* Styling adjustments for custom scrollbars and slider track */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+    details summary::-webkit-details-marker {
+      display: none;
+    }
+  </style>
+</head>
+<body class="h-full bg-slate-950 font-sans text-slate-100 overflow-hidden">
+
+  <div class="flex flex-col lg:flex-row h-full min-h-screen">
+    
+    <!-- Left Sidebar: Controls -->
+    <aside class="w-full lg:w-[400px] xl:w-[440px] bg-slate-900 border-b lg:border-b-0 lg:border-r border-slate-800 flex flex-col h-full shrink-0">
+      
+      <!-- App Header -->
+      <div class="p-5 border-b border-slate-800 flex items-center justify-between shrink-0">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-indigo-600 to-violet-600 flex items-center justify-center shadow-md">
+            <i data-lucide="palette" class="w-4 h-4 text-white"></i>
+          </div>
+          <div>
+            <h1 class="text-sm font-semibold tracking-wider text-slate-100 uppercase">Avery Studio</h1>
+            <p class="text-[10px] text-slate-500 font-mono">v1.0.0 • Client-side Studio</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Controls -->
+      <div class="flex border-b border-slate-800 bg-slate-950/20 shrink-0 select-none">
+        <button id="tabDesigner" class="flex-1 py-3 text-[11px] font-bold tracking-wider uppercase text-center border-b-2 border-indigo-500 text-slate-100 flex items-center justify-center gap-1.5 transition-all focus:outline-none">
+          <i data-lucide="edit-3" class="w-3.5 h-3.5"></i> Designer
+        </button>
+        <button id="tabHub" class="flex-1 py-3 text-[11px] font-bold tracking-wider uppercase text-center border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center justify-center gap-1.5 transition-all focus:outline-none">
+          <i data-lucide="folder-heart" class="w-3.5 h-3.5"></i> My Hub
+        </button>
+      </div>
+
+      <!-- Controls Form Area -->
+      <div id="sidebarScrollArea" class="flex-1 overflow-y-auto p-4 space-y-4">
+        
+        <!-- Designer Tab Panel -->
+        <div id="designerPanel" class="space-y-4">
+          
+          <!-- Template Base Quick Form (Shown only when in template base mode) -->
+          <div id="templateBaseQuickForm" class="hidden space-y-4">
+            <div class="p-4 bg-indigo-950/20 border border-indigo-800/40 rounded-xl space-y-2">
+              <div class="flex justify-between items-start">
+                <div class="space-y-1">
+                  <span class="text-[9px] font-bold tracking-wider text-indigo-400 uppercase">ACTIVE TEMPLATE BASE</span>
+                  <h3 id="quickFormBaseName" class="text-sm font-semibold text-slate-200">Default Base</h3>
+                </div>
+                <button id="btnUnlockLayout" class="text-[10px] text-indigo-400 hover:text-indigo-300 font-semibold flex items-center gap-1 bg-indigo-950/40 border border-indigo-800/40 px-2.5 py-1.5 rounded-lg transition-all shrink-0">
+                  <i data-lucide="lock-open" class="w-3 h-3"></i> Unlock Layout
+                </button>
+              </div>
+              <p class="text-[10px] text-slate-400 leading-relaxed">
+                Layout styles, colors, and positioning are locked. Modify the content fields below to create matching labels.
+              </p>
+            </div>
+
+            <!-- Dynamic Quick Fields -->
+            <div class="space-y-4 p-4 bg-slate-900/40 border border-slate-800 rounded-xl">
+              <!-- Title Field -->
+              <div id="quickFieldTitle" class="space-y-1.5 hidden">
+                <label class="block text-[11px] font-semibold text-slate-400">Product Title</label>
+                <input type="text" id="quickInputTitle" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full transition-all">
+              </div>
+
+              <!-- Subtitle Field -->
+              <div id="quickFieldSubtitle" class="space-y-1.5 hidden">
+                <label class="block text-[11px] font-semibold text-slate-400">Subtitle / Secondary Text</label>
+                <input type="text" id="quickInputSubtitle" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full transition-all">
+              </div>
+
+              <!-- Ingredients Field -->
+              <div id="quickFieldIngredients" class="space-y-1.5 hidden">
+                <label class="block text-[11px] font-semibold text-slate-400">Ingredients / Details</label>
+                <textarea id="quickInputIngredients" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full h-28 resize-none transition-all"></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Standard Layout Accordions -->
+          <div id="standardLayoutAccordions" class="space-y-4">
+            
+            <!-- Accordion 1: Avery Template Selection -->
+            <details class="group bg-slate-900/60 border border-slate-800 rounded-lg overflow-hidden transition-all duration-200 open:border-slate-700" open>
+          <summary class="flex justify-between items-center font-medium cursor-pointer p-3.5 select-none hover:bg-slate-800/40 list-none">
+            <div class="flex items-center gap-2.5 text-xs font-semibold tracking-wider uppercase text-slate-300 group-open:text-white">
+              <i data-lucide="layout" class="w-4 h-4 text-indigo-400"></i>
+              <span>1. Avery Template</span>
+            </div>
+            <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 group-open:rotate-180 transition-transform duration-200"></i>
+          </summary>
+          <div class="p-3.5 pt-0 border-t border-slate-800/60 bg-slate-950/20 space-y-3">
+            <div>
+              <label class="block text-[11px] font-medium text-slate-400 mb-1.5">Select Label Format</label>
+              <!-- Search box -->
+              <div class="relative mb-2">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-2.5 pointer-events-none">
+                  <i data-lucide="search" class="w-3.5 h-3.5 text-slate-500"></i>
+                </span>
+                <input type="text" id="templateSearch" placeholder="Type to search (e.g. 5160, round)..." class="bg-slate-800 border border-slate-700 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full transition-all">
+              </div>
+              <select data-bind="templateId" id="templateSelect" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-full transition-all cursor-pointer">
+                <!-- Dynamically populated -->
+              </select>
+            </div>
+            
+            <!-- Dynamic Template Details Display -->
+            <div id="templateInfoBlock" class="p-3 bg-slate-800/40 border border-slate-800/80 rounded-lg text-xs space-y-1 text-slate-400">
+              <div class="flex justify-between"><span class="text-slate-500">Dimensions:</span> <span id="infoDim" class="font-medium text-slate-200">2" x 2"</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">Sheet Layout:</span> <span id="infoLayout" class="font-medium text-slate-200">3 cols x 4 rows</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">Labels Per Sheet:</span> <span id="infoTotal" class="font-medium text-slate-200">12</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">Label Shape:</span> <span id="infoShape" class="font-medium text-slate-200">Circular</span></div>
+            </div>
+          </div>
+        </details>
+
+        <!-- Accordion 2: Label Background (Color & Image) -->
+        <details class="group bg-slate-900/60 border border-slate-800 rounded-lg overflow-hidden transition-all duration-200 open:border-slate-700">
+          <summary class="flex justify-between items-center font-medium cursor-pointer p-3.5 select-none hover:bg-slate-800/40 list-none">
+            <div class="flex items-center gap-2.5 text-xs font-semibold tracking-wider uppercase text-slate-300 group-open:text-white">
+              <i data-lucide="image" class="w-4 h-4 text-indigo-400"></i>
+              <span>2. Label Background</span>
+            </div>
+            <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 group-open:rotate-180 transition-transform duration-200"></i>
+          </summary>
+          <div class="p-3.5 pt-0 border-t border-slate-800/60 bg-slate-950/20 space-y-4">
+            
+            <!-- Label Solid Background Color -->
+            <div>
+              <label class="block text-[11px] font-medium text-slate-400 mb-1.5">Background Fill Color</label>
+              <div class="flex items-center gap-2">
+                <div class="relative w-8 h-8 rounded-lg overflow-hidden border border-slate-700 shadow-sm shrink-0">
+                  <input type="color" data-bind="bgColor" class="absolute inset-0 w-full h-full p-0 border-0 cursor-pointer bg-transparent scale-150">
+                </div>
+                <input type="text" data-bind="bgColor" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-100 font-mono w-28 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              </div>
+            </div>
+
+            <!-- Background Image Dropzone -->
+            <div>
+              <label class="block text-[11px] font-medium text-slate-400 mb-1.5">Background Artwork / Logo</label>
+              <div id="imageDropZone" class="border-2 border-dashed border-slate-700 hover:border-slate-500 rounded-lg p-4 text-center cursor-pointer transition-all bg-slate-800/20 group/dropzone">
+                <input type="file" id="bgFileInput" class="hidden" accept="image/*">
+                <div class="flex flex-col items-center justify-center space-y-2">
+                  <i data-lucide="upload-cloud" id="uploadIcon" class="w-8 h-8 text-slate-500 group-hover/dropzone:text-slate-400 transition-colors"></i>
+                  <img id="imgThumbnail" class="w-16 h-16 object-contain rounded border border-slate-700 hidden shadow-md" alt="Preview">
+                  <div id="imagePlaceholderText" class="text-xs text-slate-400">
+                    <span class="text-indigo-400 font-medium">Click to upload</span> or drag and drop<br>
+                    <span class="text-[10px] text-slate-500">PNG, JPG, or WEBP</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Background Image Position Adjustments -->
+            <div id="imageControls" class="hidden space-y-3.5 pt-2 border-t border-slate-800/60">
+              <div>
+                <div class="flex justify-between text-xs text-slate-400 mb-1">
+                  <span>Image Scale</span>
+                  <span data-indicator="bgScale" class="font-mono text-slate-300">100%</span>
+                </div>
+                <input type="range" data-bind="bgScale" min="10" max="300" class="w-full accent-indigo-600 bg-slate-700 h-1 rounded-lg appearance-none cursor-pointer">
+              </div>
+              <div>
+                <div class="flex justify-between text-xs text-slate-400 mb-1">
+                  <span>Image Position X</span>
+                  <span data-indicator="bgX" class="font-mono text-slate-300">50%</span>
+                </div>
+                <input type="range" data-bind="bgX" min="-50" max="150" class="w-full accent-indigo-600 bg-slate-700 h-1 rounded-lg appearance-none cursor-pointer">
+              </div>
+              <div>
+                <div class="flex justify-between text-xs text-slate-400 mb-1">
+                  <span>Image Position Y</span>
+                  <span data-indicator="bgY" class="font-mono text-slate-300">50%</span>
+                </div>
+                <input type="range" data-bind="bgY" min="-50" max="150" class="w-full accent-indigo-600 bg-slate-700 h-1 rounded-lg appearance-none cursor-pointer">
+              </div>
+              <button id="removeImgBtn" class="text-xs text-rose-400 hover:text-rose-300 flex items-center gap-1.5 font-medium transition-colors pt-1">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Remove Image
+              </button>
+            </div>
+
+          </div>
+        </details>
+
+        <!-- Accordion 3: Product Title -->
+        <details class="group bg-slate-900/60 border border-slate-800 rounded-lg overflow-hidden transition-all duration-200 open:border-slate-700">
+          <summary class="flex justify-between items-center font-medium cursor-pointer p-3.5 select-none hover:bg-slate-800/40 list-none">
+            <div class="flex items-center gap-2.5 text-xs font-semibold tracking-wider uppercase text-slate-300 group-open:text-white">
+              <i data-lucide="type" class="w-4 h-4 text-indigo-400"></i>
+              <span>3. Product Title</span>
+            </div>
+            <div class="flex items-center gap-2 shrink-0" onclick="event.stopPropagation()">
+              <span class="text-[10px] text-slate-500 font-medium select-none">Enable</span>
+              <input type="checkbox" data-bind="titleEnabled" class="w-3.5 h-3.5 rounded border-slate-700 text-indigo-600 focus:ring-indigo-500 bg-slate-800 cursor-pointer">
+              <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 group-open:rotate-180 transition-transform duration-200"></i>
+            </div>
+          </summary>
+          <div class="p-3.5 pt-0 border-t border-slate-800/60 bg-slate-950/20">
+            <fieldset id="titleFields" class="space-y-3.5 pt-3.5 disabled:opacity-40 disabled:pointer-events-none transition-all duration-200">
+              <div>
+                <label class="block text-[11px] font-medium text-slate-400 mb-1">Title Text</label>
+                <input type="text" data-bind="titleText" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-full transition-all">
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-[11px] font-medium text-slate-400 mb-1">Font Style</label>
+                  <select data-bind="titleFont" class="bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-100 focus:outline-none w-full transition-all cursor-pointer">
+                    <option value="Playfair Display">Serif (Playfair)</option>
+                    <option value="Inter">Sans (Inter)</option>
+                    <option value="Great Vibes">Script (Vibes)</option>
+                    <option value="Cinzel">Cinzel (Classic)</option>
+                    <option value="Alexandria">Alexandria (Modern)</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-[11px] font-medium text-slate-400 mb-1">Weight</label>
+                  <select data-bind="titleFontWeight" class="bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-100 focus:outline-none w-full transition-all cursor-pointer">
+                    <option value="normal">Normal</option>
+                    <option value="bold">Bold</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label class="block text-[11px] font-medium text-slate-400 mb-1">Text Color</label>
+                <div class="flex items-center gap-2">
+                  <div class="relative w-8 h-8 rounded-lg overflow-hidden border border-slate-700 shadow-sm shrink-0">
+                    <input type="color" data-bind="titleColor" class="absolute inset-0 w-full h-full p-0 border-0 cursor-pointer bg-transparent scale-150">
+                  </div>
+                  <input type="text" data-bind="titleColor" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-100 font-mono w-28 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+              </div>
+              <div>
+                <div class="flex justify-between text-xs text-slate-400 mb-1">
+                  <span>Font Size</span>
+                  <span data-indicator="titleSize" class="font-mono text-slate-300">24pt</span>
+                </div>
+                <input type="range" data-bind="titleSize" min="8" max="72" class="w-full accent-indigo-600 bg-slate-700 h-1 rounded-lg appearance-none cursor-pointer">
+              </div>
+              <div>
+                <div class="flex justify-between text-xs text-slate-400 mb-1">
+                  <span>Horizontal X Position</span>
+                  <span data-indicator="titleX" class="font-mono text-slate-300">50%</span>
+                </div>
+                <input type="range" data-bind="titleX" min="0" max="100" class="w-full accent-indigo-600 bg-slate-700 h-1 rounded-lg appearance-none cursor-pointer">
+              </div>
+              <div>
+                <div class="flex justify-between text-xs text-slate-400 mb-1">
+                  <span>Vertical Y Position</span>
+                  <span data-indicator="titleY" class="font-mono text-slate-300">30%</span>
+                </div>
+                <input type="range" data-bind="titleY" min="0" max="100" class="w-full accent-indigo-600 bg-slate-700 h-1 rounded-lg appearance-none cursor-pointer">
+              </div>
+            </fieldset>
+          </div>
+        </details>
+
+        <!-- Accordion 4: Subtitle / Secondary Text -->
+        <details class="group bg-slate-900/60 border border-slate-800 rounded-lg overflow-hidden transition-all duration-200 open:border-slate-700">
+          <summary class="flex justify-between items-center font-medium cursor-pointer p-3.5 select-none hover:bg-slate-800/40 list-none">
+            <div class="flex items-center gap-2.5 text-xs font-semibold tracking-wider uppercase text-slate-300 group-open:text-white">
+              <i data-lucide="heading" class="w-4 h-4 text-indigo-400"></i>
+              <span>4. Subtitle Layer</span>
+            </div>
+            <div class="flex items-center gap-2 shrink-0" onclick="event.stopPropagation()">
+              <span class="text-[10px] text-slate-500 font-medium select-none">Enable</span>
+              <input type="checkbox" data-bind="subtitleEnabled" class="w-3.5 h-3.5 rounded border-slate-700 text-indigo-600 focus:ring-indigo-500 bg-slate-800 cursor-pointer">
+              <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 group-open:rotate-180 transition-transform duration-200"></i>
+            </div>
+          </summary>
+          <div class="p-3.5 pt-0 border-t border-slate-800/60 bg-slate-950/20">
+            <fieldset id="subtitleFields" class="space-y-3.5 pt-3.5 disabled:opacity-40 disabled:pointer-events-none transition-all duration-200">
+              <div>
+                <label class="block text-[11px] font-medium text-slate-400 mb-1">Subtitle Text</label>
+                <input type="text" data-bind="subtitleText" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-full transition-all">
+              </div>
+              <div>
+                <label class="block text-[11px] font-medium text-slate-400 mb-1">Font Style</label>
+                <select data-bind="subtitleFont" class="bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-100 focus:outline-none w-full transition-all cursor-pointer">
+                  <option value="Inter">Sans (Inter)</option>
+                  <option value="Playfair Display">Serif (Playfair)</option>
+                  <option value="Great Vibes">Script (Vibes)</option>
+                  <option value="Cinzel">Cinzel (Classic)</option>
+                  <option value="Alexandria">Alexandria (Modern)</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[11px] font-medium text-slate-400 mb-1">Text Color</label>
+                <div class="flex items-center gap-2">
+                  <div class="relative w-8 h-8 rounded-lg overflow-hidden border border-slate-700 shadow-sm shrink-0">
+                    <input type="color" data-bind="subtitleColor" class="absolute inset-0 w-full h-full p-0 border-0 cursor-pointer bg-transparent scale-150">
+                  </div>
+                  <input type="text" data-bind="subtitleColor" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-100 font-mono w-28 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+              </div>
+              <div>
+                <div class="flex justify-between text-xs text-slate-400 mb-1">
+                  <span>Font Size</span>
+                  <span data-indicator="subtitleSize" class="font-mono text-slate-300">10pt</span>
+                </div>
+                <input type="range" data-bind="subtitleSize" min="6" max="36" class="w-full accent-indigo-600 bg-slate-700 h-1 rounded-lg appearance-none cursor-pointer">
+              </div>
+              <div>
+                <div class="flex justify-between text-xs text-slate-400 mb-1">
+                  <span>Horizontal X Position</span>
+                  <span data-indicator="subtitleX" class="font-mono text-slate-300">50%</span>
+                </div>
+                <input type="range" data-bind="subtitleX" min="0" max="100" class="w-full accent-indigo-600 bg-slate-700 h-1 rounded-lg appearance-none cursor-pointer">
+              </div>
+              <div>
+                <div class="flex justify-between text-xs text-slate-400 mb-1">
+                  <span>Vertical Y Position</span>
+                  <span data-indicator="subtitleY" class="font-mono text-slate-300">48%</span>
+                </div>
+                <input type="range" data-bind="subtitleY" min="0" max="100" class="w-full accent-indigo-600 bg-slate-700 h-1 rounded-lg appearance-none cursor-pointer">
+              </div>
+            </fieldset>
+          </div>
+        </details>
+
+        <!-- Accordion 5: Ingredients List -->
+        <details class="group bg-slate-900/60 border border-slate-800 rounded-lg overflow-hidden transition-all duration-200 open:border-slate-700">
+          <summary class="flex justify-between items-center font-medium cursor-pointer p-3.5 select-none hover:bg-slate-800/40 list-none">
+            <div class="flex items-center gap-2.5 text-xs font-semibold tracking-wider uppercase text-slate-300 group-open:text-white">
+              <i data-lucide="align-left" class="w-4 h-4 text-indigo-400"></i>
+              <span>5. Ingredients & Details</span>
+            </div>
+            <div class="flex items-center gap-2 shrink-0" onclick="event.stopPropagation()">
+              <span class="text-[10px] text-slate-500 font-medium select-none">Enable</span>
+              <input type="checkbox" data-bind="ingredientsEnabled" class="w-3.5 h-3.5 rounded border-slate-700 text-indigo-600 focus:ring-indigo-500 bg-slate-800 cursor-pointer">
+              <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 group-open:rotate-180 transition-transform duration-200"></i>
+            </div>
+          </summary>
+          <div class="p-3.5 pt-0 border-t border-slate-800/60 bg-slate-950/20">
+            <fieldset id="ingredientsFields" class="space-y-3.5 pt-3.5 disabled:opacity-40 disabled:pointer-events-none transition-all duration-200">
+              <div>
+                <label class="block text-[11px] font-medium text-slate-400 mb-1">Ingredients / Details Text</label>
+                <textarea data-bind="ingredientsText" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-full h-20 resize-none transition-all"></textarea>
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-[11px] font-medium text-slate-400 mb-1">Font Style</label>
+                  <select data-bind="ingredientsFont" class="bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-100 focus:outline-none w-full transition-all cursor-pointer">
+                    <option value="Inter">Sans (Inter)</option>
+                    <option value="Playfair Display">Serif (Playfair)</option>
+                    <option value="Great Vibes">Script (Vibes)</option>
+                    <option value="Cinzel">Cinzel (Classic)</option>
+                    <option value="Alexandria">Alexandria (Modern)</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-[11px] font-medium text-slate-400 mb-1">Alignment</label>
+                  <div class="flex rounded-md border border-slate-750 bg-slate-800 p-0.5 w-full">
+                    <button type="button" data-align="left" class="flex-1 py-1 text-[10px] font-medium text-slate-400 rounded transition-colors hover:text-slate-200">Left</button>
+                    <button type="button" data-align="center" class="flex-1 py-1 text-[10px] font-medium text-slate-400 rounded transition-colors hover:text-slate-200">Ctr</button>
+                    <button type="button" data-align="right" class="flex-1 py-1 text-[10px] font-medium text-slate-400 rounded transition-colors hover:text-slate-200">Rgt</button>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <label class="block text-[11px] font-medium text-slate-400 mb-1">Text Color</label>
+                <div class="flex items-center gap-2">
+                  <div class="relative w-8 h-8 rounded-lg overflow-hidden border border-slate-700 shadow-sm shrink-0">
+                    <input type="color" data-bind="ingredientsColor" class="absolute inset-0 w-full h-full p-0 border-0 cursor-pointer bg-transparent scale-150">
+                  </div>
+                  <input type="text" data-bind="ingredientsColor" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-100 font-mono w-28 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+              </div>
+              <div class="flex items-center justify-between py-1 bg-slate-800/20 px-2 rounded-lg border border-slate-800/80">
+                <label for="wrapCheck" class="text-xs font-medium text-slate-400 cursor-pointer select-none">Auto-Wrap Ingredients</label>
+                <input type="checkbox" id="wrapCheck" data-bind="ingredientsWrap" class="w-4 h-4 rounded border-slate-700 text-indigo-600 focus:ring-indigo-500 bg-slate-800 cursor-pointer">
+              </div>
+              <div>
+                <div class="flex justify-between text-xs text-slate-400 mb-1">
+                  <span>Line Height</span>
+                  <span data-indicator="ingredientsLineHeight" class="font-mono text-slate-300">1.3x</span>
+                </div>
+                <input type="range" data-bind="ingredientsLineHeight" min="1.0" max="2.5" step="0.1" class="w-full accent-indigo-600 bg-slate-700 h-1 rounded-lg appearance-none cursor-pointer">
+              </div>
+              <div>
+                <div class="flex justify-between text-xs text-slate-400 mb-1">
+                  <span>Font Size</span>
+                  <span data-indicator="ingredientsSize" class="font-mono text-slate-300">6pt</span>
+                </div>
+                <input type="range" data-bind="ingredientsSize" min="4" max="20" class="w-full accent-indigo-600 bg-slate-700 h-1 rounded-lg appearance-none cursor-pointer">
+              </div>
+              <div>
+                <div class="flex justify-between text-xs text-slate-400 mb-1">
+                  <span>Horizontal X Position</span>
+                  <span data-indicator="ingredientsX" class="font-mono text-slate-300">50%</span>
+                </div>
+                <input type="range" data-bind="ingredientsX" min="0" max="100" class="w-full accent-indigo-600 bg-slate-700 h-1 rounded-lg appearance-none cursor-pointer">
+              </div>
+              <div>
+                <div class="flex justify-between text-xs text-slate-400 mb-1">
+                  <span>Vertical Y Position</span>
+                  <span data-indicator="ingredientsY" class="font-mono text-slate-300">72%</span>
+                </div>
+                <input type="range" data-bind="ingredientsY" min="0" max="100" class="w-full accent-indigo-600 bg-slate-700 h-1 rounded-lg appearance-none cursor-pointer">
+              </div>
+            </fieldset>
+          </div>
+        </details>
+
+          </div> <!-- Close standardLayoutAccordions -->
+        </div> <!-- Close designerPanel -->
+
+        <!-- My Hub Tab Panel -->
+        <div id="hubPanel" class="hidden space-y-4">
+          <!-- Save Current Design Card -->
+          <div class="p-4 bg-slate-900/40 border border-slate-800 rounded-xl space-y-3">
+            <h3 class="text-xs font-semibold tracking-wider text-slate-300 uppercase">Save Current Design</h3>
+            <div class="space-y-2">
+              <input type="text" id="newProjectName" placeholder="Enter design or template base name..." class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full transition-all">
+              
+              <div class="flex items-center justify-between py-1 px-1">
+                <label for="saveAsBaseCheck" class="text-[11px] text-slate-400 cursor-pointer select-none flex items-center gap-1.5">
+                  <input type="checkbox" id="saveAsBaseCheck" class="w-3.5 h-3.5 rounded border-slate-700 text-indigo-600 focus:ring-indigo-500 bg-slate-800 cursor-pointer">
+                  Save as a "Template Base"
+                </label>
+              </div>
+
+              <button id="btnSaveProject" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-2 rounded-lg text-xs font-bold tracking-wider transition-all flex items-center justify-center gap-1">
+                <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> SAVE TO HUB
+              </button>
+            </div>
+          </div>
+
+          <!-- Saved Templates/Projects List -->
+          <div class="space-y-3">
+            <div class="flex items-center justify-between px-1">
+              <h3 class="text-xs font-semibold tracking-wider text-slate-400 uppercase">Your Saved Library</h3>
+              <span id="savedLibraryCount" class="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-400 font-mono">0</span>
+            </div>
+            
+            <!-- Dynamic list container -->
+            <div id="savedProjectsList" class="space-y-2">
+              <div class="text-center py-8 text-slate-500 text-xs">
+                <i data-lucide="archive" class="w-6 h-6 mx-auto mb-2 opacity-40"></i>
+                No saved templates or projects yet.
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div> <!-- Close sidebarScrollArea -->
+
+      <!-- Persistent Footer Actions -->
+      <div class="p-4 border-t border-slate-800 space-y-2 shrink-0">
+        <button id="resetBtn" class="w-full border border-slate-800 bg-slate-900/60 hover:bg-slate-800/80 hover:border-slate-700 text-slate-400 hover:text-slate-200 py-2.5 rounded-lg text-xs font-semibold tracking-wide transition-all flex items-center justify-center gap-1.5">
+          <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> RESET LAYOUT TO DEFAULT
+        </button>
+        <button id="exportBtn" class="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white py-3 rounded-lg text-sm font-bold tracking-wide shadow-lg hover:shadow-xl hover:shadow-indigo-500/10 transition-all flex items-center justify-center gap-2">
+          <i data-lucide="printer" class="w-4 h-4"></i> EXPORT & PRINT PDF
+        </button>
+      </div>
+
+    </aside>
+
+    <!-- Right Side: Live Preview Stage -->
+    <main class="flex-1 flex flex-col h-full min-w-0 bg-slate-950">
+      
+      <!-- Studio Top Controls Bar -->
+      <header class="h-16 border-b border-slate-800 flex items-center justify-between px-6 shrink-0 bg-slate-900/40">
+        <div>
+          <h2 class="text-sm font-semibold text-slate-100 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            Preview Studio
+          </h2>
+          <p id="activeTemplateBadge" class="text-[10px] text-slate-500 font-mono">Avery 22807 • 12 Labels / Sheet</p>
+        </div>
+        
+        <!-- Toggles: Show Safety Zone & Single/Full Sheet View -->
+        <div class="flex items-center gap-4">
+          <!-- Toggle: Show Safety Zone -->
+          <div class="flex items-center gap-2 bg-slate-900/60 border border-slate-800 px-3 py-1.5 rounded-lg text-xs">
+            <label for="safetyZoneToggle" class="text-slate-400 font-medium cursor-pointer select-none">Show Safety Zone</label>
+            <input type="checkbox" id="safetyZoneToggle" data-bind="showSafetyZone" class="w-3.5 h-3.5 rounded border-slate-700 text-indigo-600 focus:ring-indigo-500 bg-slate-800 cursor-pointer">
+          </div>
+
+          <!-- Toggle: Single vs Full Sheet View -->
+          <div class="bg-slate-900 p-1 rounded-lg inline-flex gap-1 border border-slate-800">
+            <button id="btnViewSingle" class="px-3.5 py-1.5 rounded-md text-xs font-medium transition-all bg-slate-800 text-white shadow-sm flex items-center gap-1.5">
+              <i data-lucide="square" class="w-3.5 h-3.5"></i> Single Label
+            </button>
+            <button id="btnViewSheet" class="px-3.5 py-1.5 rounded-md text-xs font-medium transition-all text-slate-400 hover:text-slate-200 flex items-center gap-1.5">
+              <i data-lucide="grid" class="w-3.5 h-3.5"></i> Full Sheet
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <!-- Interactive Canvas Stage Container -->
+      <div class="flex-1 overflow-auto p-6 md:p-8 flex items-center justify-center relative bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:16px_16px]">
+        
+        <div class="relative flex flex-col items-center justify-center w-full max-w-4xl h-full">
+          <!-- Canvas Container with modern drop shadow -->
+          <div class="relative bg-white/5 border border-slate-800 rounded-xl p-6 md:p-8 shadow-2xl flex items-center justify-center max-w-full max-h-[72vh] overflow-hidden group">
+            <canvas id="studioCanvas" class="shadow-2xl bg-white transition-all duration-300 max-w-full max-h-[64vh] rounded"></canvas>
+          </div>
+          
+          <!-- Helpful Preview Guidelines Warning -->
+          <p class="mt-4 text-[11px] text-slate-500 text-center select-none flex items-center gap-1.5 justify-center flex-wrap">
+            <i data-lucide="info" class="w-3 h-3 text-slate-400"></i>
+            <span>Dashed boundary guidelines (<span class="text-slate-400 font-semibold border-b border-dashed border-slate-500">gray: cut edge</span>; <span class="text-emerald-400 font-semibold border-b border-dashed border-emerald-500">green: safety zone</span>) are for preview only and will not print on the exported PDF.</span>
+          </p>
+        </div>
+
+      </div>
+
+    </main>
+
+  </div>
+
+  <script>
+    // 1. Avery Templates Database (Expanded comprehensive database matching official sheet layouts exactly)
+    const templates = {
+      "22807": {
+        id: "22807",
+        name: "Avery 22807 / 22612 / 22817",
+        description: '2" Round • Glossy Circle (Compatible with 22612, 22205, 22817, 22825, 4227, 22877, 22921, 22923, 22933, 22961, 41464, 41494, 80510, 92111, 92807, 94501)',
+        width: 2.0,
+        height: 2.0,
+        shape: "circular",
+        cols: 3,
+        rows: 4,
+        leftMargin: 0.625,
+        topMargin: 0.875,
+        pitchX: 2.375,
+        pitchY: 2.375
+      },
+      "22830": {
+        id: "22830",
+        name: "Avery 22830 / 22804",
+        description: '2.5" Round • Glossy Circle (Compatible with 22804, 41467, 22856, 41496, 92804, 94502, 92830)',
+        width: 2.5,
+        height: 2.5,
+        shape: "circular",
+        cols: 3,
+        rows: 3,
+        leftMargin: 0.5,
+        topMargin: 1.5,
+        pitchX: 2.75,
+        pitchY: 2.75
+      },
+      "22805": {
+        id: "22805",
+        name: "Avery 22805 / 22822",
+        description: '1.5" Round • Matte Circle (Compatible with 22822, 92805, 94500, 22821, 22920)',
+        width: 1.5,
+        height: 1.5,
+        shape: "circular",
+        cols: 4,
+        rows: 6,
+        leftMargin: 0.75,
+        topMargin: 0.75,
+        pitchX: 1.75,
+        pitchY: 1.625
+      },
+      "6450": {
+        id: "6450",
+        name: "Avery 6450",
+        description: '1" Round • Small Circle (Compatible with 92801, 94503)',
+        width: 1.0,
+        height: 1.0,
+        shape: "circular",
+        cols: 7,
+        rows: 9,
+        leftMargin: 0.5,
+        topMargin: 0.5,
+        pitchX: 1.08,
+        pitchY: 1.08
+      },
+      "22806": {
+        id: "22806",
+        name: "Avery 22806 / 22816",
+        description: '2" x 2" Square (Compatible with 22816, 22853, 22826, 41466, 41493, 92806, 94504)',
+        width: 2.0,
+        height: 2.0,
+        shape: "square",
+        cols: 3,
+        rows: 4,
+        leftMargin: 0.625,
+        topMargin: 0.875,
+        pitchX: 2.375,
+        pitchY: 2.375
+      },
+      "22854": {
+        id: "22854",
+        name: "Avery 22854 / 22849",
+        description: '2.5" x 2.5" Square (Compatible with 22849, 22852, 92854)',
+        width: 2.5,
+        height: 2.5,
+        shape: "square",
+        cols: 3,
+        rows: 4,
+        leftMargin: 0.5,
+        topMargin: 0.5,
+        pitchX: 2.625,
+        pitchY: 2.625
+      },
+      "5160": {
+        id: "5160",
+        name: "Avery 5160 / 8160 / 5260",
+        description: '1" x 2.625" Address Rectangle (Compatible with 8160, 5260, 8460, 48160, 48260, 48460, 48860, 48960, 5520, 5810, 5860, 5960, 8250, 8660, 8810, 8860, 15160, 15660, 18160, 18260, 18660, 28660, 32660, 38160, 38260, 45160, 5620, 5630, 5660, 5970, 5971, 5972, 5978, 5979, 5980, 60505, 80509)',
+        width: 2.625,
+        height: 1.0,
+        shape: "rectangular",
+        cols: 3,
+        rows: 10,
+        leftMargin: 0.1875,
+        topMargin: 0.5,
+        pitchX: 2.75,
+        pitchY: 1.0
+      },
+      "5161": {
+        id: "5161",
+        name: "Avery 5161 / 8161 / 5261",
+        description: '1" x 4" Shipping Rectangle (Compatible with 8161, 5261, 8461, 48161, 48261, 5961, 15161, 18161, 18661, 95961)',
+        width: 4.0,
+        height: 1.0,
+        shape: "rectangular",
+        cols: 2,
+        rows: 10,
+        leftMargin: 0.1875,
+        topMargin: 0.5,
+        pitchX: 4.125,
+        pitchY: 1.0
+      },
+      "5162": {
+        id: "5162",
+        name: "Avery 5162 / 8162 / 5262",
+        description: '1.33" x 4" Address Rectangle (Compatible with 8162, 5262, 8462, 48162, 48262, 48862, 48962, 5962, 8252, 8662, 8862, 95962)',
+        width: 4.0,
+        height: 1.333,
+        shape: "rectangular",
+        cols: 2,
+        rows: 7,
+        leftMargin: 0.1875,
+        topMargin: 0.833,
+        pitchX: 4.125,
+        pitchY: 1.333
+      },
+      "5163": {
+        id: "5163",
+        name: "Avery 5163 / 8163 / 5263",
+        description: '2" x 4" Shipping Rectangle (Compatible with 8163, 5263, 8463, 48163, 48263, 48363, 48463, 48863, 5963, 8253, 8363, 8663, 8863, 15163, 15563, 15663, 18163, 18663, 28663, 38363, 38863, 45163, 5523, 5663, 60506, 80512, 8563, 95963)',
+        width: 4.0,
+        height: 2.0,
+        shape: "rectangular",
+        cols: 2,
+        rows: 5,
+        leftMargin: 0.1875,
+        topMargin: 0.5,
+        pitchX: 4.125,
+        pitchY: 2.0
+      },
+      "5164": {
+        id: "5164",
+        name: "Avery 5164 / 8164 / 5264",
+        description: '3.33" x 4" Shipping Rectangle (Compatible with 8164, 5264, 8464, 45164, 48164, 48264, 48464, 48864, 5524, 5964, 15164, 18164)',
+        width: 4.0,
+        height: 3.333,
+        shape: "rectangular",
+        cols: 2,
+        rows: 3,
+        leftMargin: 0.1875,
+        topMargin: 0.5,
+        pitchX: 4.125,
+        pitchY: 3.333
+      },
+      "22820": {
+        id: "22820",
+        name: "Avery 22820 / 22814",
+        description: '2" x 3" Oval (Compatible with 22814, 22855, 22922, 22925, 41468, 41495, 92820, 94507)',
+        width: 3.0,
+        height: 2.0,
+        shape: "oval",
+        cols: 2,
+        rows: 4,
+        leftMargin: 1.125,
+        topMargin: 0.875,
+        pitchX: 3.25,
+        pitchY: 2.375
+      },
+      "22809": {
+        id: "22809",
+        name: "Avery 22809 / 22824",
+        description: '2" x 3.5" Rectangular Label (Compatible with 22824, 22837, 22846, 22847, 92809)',
+        width: 3.5,
+        height: 2.0,
+        shape: "rectangular",
+        cols: 2,
+        rows: 4,
+        leftMargin: 0.75,
+        topMargin: 0.75,
+        pitchX: 3.75,
+        pitchY: 2.5
+      },
+      "5165": {
+        id: "5165",
+        name: "Avery 5165 / 8165",
+        description: '8.5" x 11" Full Sheet Rectangle (Compatible with 8165, 5265, 8465, 48165, 48265, 48465, 48865, 5353, 5360, 5455, 5459, 5665, 60507, 60508, 80508, 8255, 8665)',
+        width: 8.5,
+        height: 11.0,
+        shape: "rectangular",
+        cols: 1,
+        rows: 1,
+        leftMargin: 0.0,
+        topMargin: 0.0,
+        pitchX: 0.0,
+        pitchY: 0.0
+      }
+    };
+
+    // 1.5 IndexedDB Persistence Engine
+    const DB_NAME = 'AveryStudioDB';
+    const DB_VERSION = 1;
+    const STORE_NAME = 'studioState';
+
+    function openDatabase() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        request.onupgradeneeded = (e) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains(STORE_NAME)) {
+            db.createObjectStore(STORE_NAME);
+          }
+        };
+        request.onsuccess = (e) => resolve(e.target.result);
+        request.onerror = (e) => reject(e.target.error);
+      });
+    }
+
+    async function saveStateToDB() {
+      try {
+        const db = await openDatabase();
+        return new Promise((resolve, reject) => {
+          const transaction = db.transaction([STORE_NAME], 'readwrite');
+          const store = transaction.objectStore(STORE_NAME);
+          
+          const stateToSave = { ...state };
+          delete stateToSave.bgImage; // HTMLImageElement cannot be cloned
+          
+          const request = store.put(stateToSave, 'currentSession');
+          request.onsuccess = () => resolve();
+          request.onerror = (e) => reject(e.target.error);
+        });
+      } catch (err) {
+        console.error('Failed to save state to IndexedDB:', err);
+      }
+    }
+
+    async function loadStateFromDB() {
+      try {
+        const db = await openDatabase();
+        return new Promise((resolve, reject) => {
+          const transaction = db.transaction([STORE_NAME], 'readonly');
+          const store = transaction.objectStore(STORE_NAME);
+          const request = store.get('currentSession');
+          request.onsuccess = (e) => resolve(e.target.result || null);
+          request.onerror = (e) => reject(e.target.error);
+        });
+      } catch (err) {
+        console.error('Failed to load state from IndexedDB:', err);
+        return null;
+      }
+    }
+
+    let saveTimeout = null;
+    function triggerStateSave() {
+      if (saveTimeout) clearTimeout(saveTimeout);
+      saveTimeout = setTimeout(() => {
+        saveStateToDB();
+      }, 500); // 500ms debounce
+    }
+
+    // 2. Application State Configuration
+    const state = {
+      templateId: '22807',
+      bgColor: '#ffffff',
+      bgImage: null,
+      bgImageDataURL: null,
+      bgScale: 100,
+      bgX: 50,
+      bgY: 50,
+      titleEnabled: true,
+      titleText: 'ORGANIC LAVENDER',
+      titleFont: 'Playfair Display',
+      titleSize: 24,
+      titleColor: '#334155',
+      titleX: 50,
+      titleY: 30,
+      titleFontWeight: 'bold',
+      subtitleEnabled: true,
+      subtitleText: 'Premium Handcrafted Soap',
+      subtitleFont: 'Inter',
+      subtitleSize: 10,
+      subtitleColor: '#64748b',
+      subtitleX: 50,
+      subtitleY: 48,
+      ingredientsEnabled: true,
+      ingredientsText: 'Ingredients: Organic saponified coconut oil, extra virgin olive oil, lavender essential oil, dried lavender buds, natural mineral oxides.',
+      ingredientsFont: 'Inter',
+      ingredientsSize: 6,
+      ingredientsColor: '#64748b',
+      ingredientsX: 50,
+      ingredientsY: 72,
+      ingredientsAlign: 'center',
+      ingredientsWrap: true,
+      ingredientsLineHeight: 1.3,
+      showSafetyZone: true,
+      isTemplateBaseMode: false,
+      activeBaseName: '',
+      viewMode: 'single' // 'single' | 'sheet'
+    };
+
+    // 3. Canvas and UI references
+    const canvas = document.getElementById('studioCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    // 4. State updates & reactive binding helper
+    function updateState(key, value, skipSave = false) {
+      state[key] = value;
+      
+      // Update all inputs bound to this state key
+      const inputs = document.querySelectorAll(`[data-bind="${key}"]`);
+      inputs.forEach(input => {
+        if (input.type === 'checkbox') {
+          input.checked = value;
+        } else if (input.type === 'radio') {
+          input.checked = (input.value === value);
+        } else {
+          input.value = value;
+        }
+      });
+
+      // Update range value display indicators
+      const indicators = document.querySelectorAll(`[data-indicator="${key}"]`);
+      indicators.forEach(ind => {
+        let suffix = '';
+        if (key.endsWith('X') || key.endsWith('Y') || key === 'bgScale') {
+          suffix = '%';
+        } else if (key.endsWith('Size')) {
+          suffix = 'pt';
+        } else if (key === 'ingredientsLineHeight') {
+          suffix = 'x';
+        }
+        ind.textContent = `${value}${suffix}`;
+      });
+
+      // Specific reactive sidebar elements
+      if (key === 'templateId') {
+        updateTemplateInfo();
+      }
+
+      // Sync fieldset disabled states
+      if (key === 'titleEnabled') {
+        const titleFields = document.getElementById('titleFields');
+        if (titleFields) titleFields.disabled = !value;
+      }
+      if (key === 'subtitleEnabled') {
+        const subtitleFields = document.getElementById('subtitleFields');
+        if (subtitleFields) subtitleFields.disabled = !value;
+      }
+      if (key === 'ingredientsEnabled') {
+        const ingredientsFields = document.getElementById('ingredientsFields');
+        if (ingredientsFields) ingredientsFields.disabled = !value;
+      }
+
+      // Sync quick editor values
+      if (key === 'titleText') {
+        const qi = document.getElementById('quickInputTitle');
+        if (qi) qi.value = value;
+      }
+      if (key === 'subtitleText') {
+        const qi = document.getElementById('quickInputSubtitle');
+        if (qi) qi.value = value;
+      }
+      if (key === 'ingredientsText') {
+        const qi = document.getElementById('quickInputIngredients');
+        if (qi) qi.value = value;
+      }
+
+      renderCanvas();
+      if (!skipSave) triggerStateSave();
+    }
+
+    // Populate templates dropdown dynamically
+    function populateTemplateDropdown(query = '') {
+      const select = document.getElementById('templateSelect');
+      if (!select) return;
+      const prevVal = select.value || state.templateId;
+      select.innerHTML = '';
+      
+      let matchedCount = 0;
+      let firstMatchKey = null;
+
+      Object.keys(templates).forEach(key => {
+        const t = templates[key];
+        const text = `${t.name} (${t.description})`.toLowerCase();
+        if (text.includes(query.toLowerCase())) {
+          const opt = document.createElement('option');
+          opt.value = key;
+          opt.textContent = `${t.name} - ${t.description}`;
+          select.appendChild(opt);
+          matchedCount++;
+          if (!firstMatchKey) firstMatchKey = key;
+        }
+      });
+
+      if (select.querySelector(`option[value="${prevVal}"]`)) {
+        select.value = prevVal;
+      } else if (firstMatchKey) {
+        select.value = firstMatchKey;
+        if (state.templateId !== firstMatchKey) {
+          updateState('templateId', firstMatchKey);
+        }
+      }
+    }
+
+    // Initialize all input listeners & bindings
+    function initBindings() {
+      const inputs = document.querySelectorAll('[data-bind]');
+      inputs.forEach(input => {
+        const key = input.dataset.bind;
+        
+        // Initial setup matching the state values
+        if (input.type === 'checkbox') {
+          input.checked = state[key];
+        } else {
+          input.value = state[key];
+        }
+
+        // Setup real-time listeners
+        const eventType = (input.tagName === 'SELECT' || input.type === 'checkbox' || input.type === 'color') ? 'change' : 'input';
+        input.addEventListener(eventType, (e) => {
+          let val = e.target.value;
+          if (e.target.type === 'checkbox') {
+            val = e.target.checked;
+          } else if (e.target.type === 'range') {
+            val = parseFloat(val);
+          }
+          updateState(key, val);
+        });
+
+        // Double bind inputs listening to inputs (e.g. Hex color text input next to picker)
+        if (eventType === 'input' && input.type === 'text') {
+          input.addEventListener('change', (e) => {
+            updateState(key, e.target.value);
+          });
+        }
+      });
+
+      // Quick Input listeners for Template Base mode
+      const qiTitle = document.getElementById('quickInputTitle');
+      const qiSubtitle = document.getElementById('quickInputSubtitle');
+      const qiIngredients = document.getElementById('quickInputIngredients');
+
+      if (qiTitle) qiTitle.addEventListener('input', (e) => updateState('titleText', e.target.value));
+      if (qiSubtitle) qiSubtitle.addEventListener('input', (e) => updateState('subtitleText', e.target.value));
+      if (qiIngredients) qiIngredients.addEventListener('input', (e) => updateState('ingredientsText', e.target.value));
+
+      // Unlock Layout button listener
+      document.getElementById('btnUnlockLayout').addEventListener('click', () => {
+        updateState('isTemplateBaseMode', false);
+        syncStateToInputs(true);
+      });
+
+      // Tab selector bindings
+      const tabDesigner = document.getElementById('tabDesigner');
+      const tabHub = document.getElementById('tabHub');
+      const designerPanel = document.getElementById('designerPanel');
+      const hubPanel = document.getElementById('hubPanel');
+
+      tabDesigner.addEventListener('click', () => {
+        tabDesigner.classList.add('border-b-2', 'border-indigo-500', 'text-slate-100');
+        tabDesigner.classList.remove('border-transparent', 'text-slate-400');
+        tabHub.classList.add('border-transparent', 'text-slate-400');
+        tabHub.classList.remove('border-b-2', 'border-indigo-500', 'text-slate-100');
+        designerPanel.classList.remove('hidden');
+        hubPanel.classList.add('hidden');
+      });
+
+      tabHub.addEventListener('click', () => {
+        tabHub.classList.add('border-b-2', 'border-indigo-500', 'text-slate-100');
+        tabHub.classList.remove('border-transparent', 'text-slate-400');
+        tabDesigner.classList.add('border-transparent', 'text-slate-400');
+        tabDesigner.classList.remove('border-b-2', 'border-indigo-500', 'text-slate-100');
+        hubPanel.classList.remove('hidden');
+        designerPanel.classList.add('hidden');
+        renderSavedProjectsList();
+      });
+
+      // Save Design button click listener
+      document.getElementById('btnSaveProject').addEventListener('click', async () => {
+        const nameInput = document.getElementById('newProjectName');
+        const asBaseCheck = document.getElementById('saveAsBaseCheck');
+        if (!nameInput) return;
+        
+        const name = nameInput.value.trim();
+        if (name === '') {
+          alert('Please enter a design name to save.');
+          return;
+        }
+
+        const isBase = asBaseCheck ? asBaseCheck.checked : false;
+
+        // Capture complete current state
+        const stateCopy = { ...state };
+        delete stateCopy.bgImage; // HTMLImageElement cannot be cloned
+        if (isBase) {
+          stateCopy.isTemplateBaseMode = true;
+          stateCopy.activeBaseName = name;
+        }
+
+        const projects = await getSavedProjects();
+        projects.push({
+          id: Date.now().toString(),
+          name: name,
+          isTemplateBase: isBase,
+          state: stateCopy
+        });
+
+        await saveProjectsToDB(projects);
+        
+        // Clear input values
+        nameInput.value = '';
+        if (asBaseCheck) asBaseCheck.checked = false;
+
+        // If saved as base, immediately apply isTemplateBaseMode locally
+        if (isBase) {
+          state.isTemplateBaseMode = true;
+          state.activeBaseName = name;
+          syncStateToInputs(true);
+          saveStateToDB();
+          tabDesigner.click(); // Switch back to editor
+        } else {
+          renderSavedProjectsList();
+          alert(`Project "${name}" saved successfully to your Hub library.`);
+        }
+      });
+
+      // Initial template details load
+      updateTemplateInfo();
+    }
+
+    // 7. Saved Projects and Template Base Management
+    async function getSavedProjects() {
+      try {
+        const db = await openDatabase();
+        return new Promise((resolve, reject) => {
+          const transaction = db.transaction([STORE_NAME], 'readonly');
+          const store = transaction.objectStore(STORE_NAME);
+          const request = store.get('savedProjects');
+          request.onsuccess = (e) => resolve(e.target.result || []);
+          request.onerror = (e) => reject(e.target.error);
+        });
+      } catch (err) {
+        console.error('Failed to get saved projects:', err);
+        return [];
+      }
+    }
+
+    async function saveProjectsToDB(projects) {
+      try {
+        const db = await openDatabase();
+        return new Promise((resolve, reject) => {
+          const transaction = db.transaction([STORE_NAME], 'readwrite');
+          const store = transaction.objectStore(STORE_NAME);
+          const request = store.put(projects, 'savedProjects');
+          request.onsuccess = () => resolve();
+          request.onerror = (e) => reject(e.target.error);
+        });
+      } catch (err) {
+        console.error('Failed to save projects to DB:', err);
+      }
+    }
+
+    async function renderSavedProjectsList() {
+      const projects = await getSavedProjects();
+      const listContainer = document.getElementById('savedProjectsList');
+      const countBadge = document.getElementById('savedLibraryCount');
+      if (!listContainer) return;
+      
+      if (countBadge) countBadge.textContent = projects.length;
+
+      if (projects.length === 0) {
+        listContainer.innerHTML = `
+          <div class="text-center py-8 text-slate-500 text-xs">
+            <i data-lucide="archive" class="w-6 h-6 mx-auto mb-2 opacity-40"></i>
+            No saved templates or projects yet.
+          </div>
+        `;
+        lucide.createIcons();
+        return;
+      }
+
+      listContainer.innerHTML = '';
+      projects.forEach((proj, index) => {
+        const div = document.createElement('div');
+        div.className = 'p-3 bg-slate-800/40 border border-slate-800/80 rounded-lg space-y-2 hover:border-slate-750 transition-all';
+        
+        const badge = proj.isTemplateBase 
+          ? `<span class="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-[9px] font-bold px-1.5 py-0.5 rounded tracking-wide uppercase shrink-0">Base</span>`
+          : `<span class="bg-slate-700/30 text-slate-400 border border-slate-800 text-[9px] font-bold px-1.5 py-0.5 rounded tracking-wide uppercase shrink-0">Project</span>`;
+
+        div.innerHTML = `
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-xs font-semibold text-slate-200 truncate" title="${proj.name}">${proj.name}</span>
+            ${badge}
+          </div>
+          <div class="flex items-center gap-1.5 justify-end">
+            <button class="btn-load-proj px-2 py-1 bg-indigo-600/10 text-indigo-400 border border-indigo-500/20 rounded text-[10px] font-semibold hover:bg-indigo-600 hover:text-white transition-all flex items-center gap-0.5" data-index="${index}">
+              <i data-lucide="folder-open" class="w-3 h-3"></i> Load
+            </button>
+            <button class="btn-toggle-proj px-2 py-1 bg-slate-800 text-slate-400 border border-slate-750 rounded text-[10px] font-semibold hover:text-slate-200 hover:bg-slate-700 transition-all flex items-center gap-0.5" data-index="${index}">
+              <i data-lucide="refresh-cw" class="w-3 h-3"></i> Toggle Type
+            </button>
+            <button class="btn-delete-proj px-2 py-1 bg-rose-600/10 text-rose-400 border border-rose-500/20 rounded text-[10px] font-semibold hover:bg-rose-600 hover:text-white transition-all flex items-center gap-0.5" data-index="${index}">
+              <i data-lucide="trash-2" class="w-3 h-3"></i> Delete
+            </button>
+          </div>
+        `;
+        listContainer.appendChild(div);
+      });
+
+      // Bind button events
+      listContainer.querySelectorAll('.btn-load-proj').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const idx = parseInt(e.currentTarget.dataset.index);
+          const proj = projects[idx];
+          if (!proj) return;
+          
+          // Load design settings into state
+          Object.keys(proj.state).forEach(key => {
+            if (key !== 'bgImage' && key !== 'bgImageDataURL') {
+              state[key] = proj.state[key];
+            }
+          });
+
+          // Handle background image loading if present
+          if (proj.state.bgImageDataURL) {
+            const img = new Image();
+            img.onload = function() {
+              state.bgImage = img;
+              state.bgImageDataURL = proj.state.bgImageDataURL;
+              
+              document.getElementById('imageControls').classList.remove('hidden');
+              document.getElementById('imagePlaceholderText').classList.add('hidden');
+              const thumb = document.getElementById('imgThumbnail');
+              thumb.src = proj.state.bgImageDataURL;
+              thumb.classList.remove('hidden');
+              document.getElementById('uploadIcon').classList.add('hidden');
+
+              syncStateToInputs(true);
+              renderCanvas();
+            };
+            img.src = proj.state.bgImageDataURL;
+          } else {
+            state.bgImage = null;
+            state.bgImageDataURL = null;
+            document.getElementById('imageControls').classList.add('hidden');
+            document.getElementById('imagePlaceholderText').classList.remove('hidden');
+            const thumb = document.getElementById('imgThumbnail');
+            thumb.src = '';
+            thumb.classList.add('hidden');
+            document.getElementById('uploadIcon').classList.remove('hidden');
+
+            syncStateToInputs(true);
+            renderCanvas();
+          }
+
+          // Force designer view tab show
+          document.getElementById('tabDesigner').click();
+        });
+      });
+
+      listContainer.querySelectorAll('.btn-toggle-proj').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const idx = parseInt(e.currentTarget.dataset.index);
+          projects[idx].isTemplateBase = !projects[idx].isTemplateBase;
+          projects[idx].state.isTemplateBaseMode = projects[idx].isTemplateBase;
+          projects[idx].state.activeBaseName = projects[idx].isTemplateBase ? projects[idx].name : '';
+          
+          await saveProjectsToDB(projects);
+          renderSavedProjectsList();
+        });
+      });
+
+      listContainer.querySelectorAll('.btn-delete-proj').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const idx = parseInt(e.currentTarget.dataset.index);
+          const proj = projects[idx];
+          if (!proj) return;
+          if (confirm(`Are you sure you want to delete the saved project "${proj.name}"?`)) {
+            projects.splice(idx, 1);
+            await saveProjectsToDB(projects);
+            renderSavedProjectsList();
+          }
+        });
+      });
+
+      lucide.createIcons();
+    }
+
+    // Sync state values manually to all DOM nodes (used in initialization or reset layout)
+    function syncStateToInputs(skipSave = false) {
+      Object.keys(state).forEach(key => {
+        updateState(key, state[key], skipSave);
+      });
+      updateAlignButtons(state.ingredientsAlign);
+
+      // Sync Template Base Quick Mode Panel vs Standard Layout Accordion View
+      const standardAccordions = document.getElementById('standardLayoutAccordions');
+      const quickForm = document.getElementById('templateBaseQuickForm');
+      const quickBaseName = document.getElementById('quickFormBaseName');
+
+      if (state.isTemplateBaseMode) {
+        if (standardAccordions) standardAccordions.classList.add('hidden');
+        if (quickForm) {
+          quickForm.classList.remove('hidden');
+          if (quickBaseName) quickBaseName.textContent = state.activeBaseName || 'Active Template Base';
+          
+          // Show or hide text field inputs depending on layers enabled in the template base
+          const qTitle = document.getElementById('quickFieldTitle');
+          const qSubtitle = document.getElementById('quickFieldSubtitle');
+          const qIngredients = document.getElementById('quickFieldIngredients');
+
+          const qiTitle = document.getElementById('quickInputTitle');
+          const qiSubtitle = document.getElementById('quickInputSubtitle');
+          const qiIngredients = document.getElementById('quickInputIngredients');
+
+          if (qTitle) {
+            if (state.titleEnabled) {
+              qTitle.classList.remove('hidden');
+              if (qiTitle) qiTitle.value = state.titleText;
+            } else {
+              qTitle.classList.add('hidden');
+            }
+          }
+
+          if (qSubtitle) {
+            if (state.subtitleEnabled) {
+              qSubtitle.classList.remove('hidden');
+              if (qiSubtitle) qiSubtitle.value = state.subtitleText;
+            } else {
+              qSubtitle.classList.add('hidden');
+            }
+          }
+
+          if (qIngredients) {
+            if (state.ingredientsEnabled) {
+              qIngredients.classList.remove('hidden');
+              if (qiIngredients) qiIngredients.value = state.ingredientsText;
+            } else {
+              qIngredients.classList.add('hidden');
+            }
+          }
+        }
+      } else {
+        if (standardAccordions) standardAccordions.classList.remove('hidden');
+        if (quickForm) quickForm.classList.add('hidden');
+      }
+    }
+
+    // Dynamic Avery template info block updater
+    function updateTemplateInfo() {
+      const activeTemplate = templates[state.templateId];
+      document.getElementById('infoDim').textContent = `${activeTemplate.width}" x ${activeTemplate.height}"`;
+      document.getElementById('infoLayout').textContent = `${activeTemplate.cols} cols x ${activeTemplate.rows} rows`;
+      document.getElementById('infoTotal').textContent = `${activeTemplate.cols * activeTemplate.rows}`;
+      document.getElementById('infoShape').textContent = activeTemplate.shape.charAt(0).toUpperCase() + activeTemplate.shape.slice(1);
+      
+      // Update top header status details
+      document.getElementById('activeTemplateBadge').textContent = `${activeTemplate.name} • ${activeTemplate.cols * activeTemplate.rows} Labels / Sheet`;
+    }
+
+    // Helper: draw rounded rectangles path
+    function drawRoundedRectPath(ctx, x, y, width, height, radius) {
+      ctx.beginPath();
+      ctx.moveTo(x + radius, y);
+      ctx.lineTo(x + width - radius, y);
+      ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+      ctx.lineTo(x + width, y + height - radius);
+      ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+      ctx.lineTo(x + radius, y + height);
+      ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+      ctx.lineTo(x, y + radius);
+      ctx.quadraticCurveTo(x, y, x + radius, y);
+      ctx.closePath();
+    }
+
+    // Helper: wrap and draw paragraph text
+    function drawWrappedText(ctx, text, x, y, maxWidth, lineHeight, align) {
+      ctx.textAlign = align;
+      const paragraphs = text.split('\n');
+      const lines = [];
+      
+      paragraphs.forEach(paragraph => {
+        if (paragraph.trim() === '') {
+          lines.push('');
+          return;
+        }
+        const words = paragraph.split(/\s+/);
+        let currentLine = '';
+        
+        for (let i = 0; i < words.length; i++) {
+          const word = words[i];
+          const testLine = currentLine ? currentLine + ' ' + word : word;
+          const metrics = ctx.measureText(testLine);
+          if (metrics.width > maxWidth && currentLine) {
+            lines.push(currentLine);
+            currentLine = word;
+          } else {
+            currentLine = testLine;
+          }
+        }
+        if (currentLine) {
+          lines.push(currentLine);
+        }
+      });
+      
+      for (let i = 0; i < lines.length; i++) {
+        ctx.fillText(lines[i], x, y + (i * lineHeight));
+      }
+    }
+
+    // 5. Drawing Engine
+    // Draws a single label onto a canvas context (can be onscreen canvas or high-res offscreen printing canvas)
+    function drawLabel(ctx, template, state, forPrint = false) {
+      const width = ctx.canvas.width;
+      const height = ctx.canvas.height;
+      const scaleDPI = width / template.width; // DPI multiplier based on target canvas width
+
+      // 1. Clear background
+      ctx.clearRect(0, 0, width, height);
+
+      // 2. Draw label fill color
+      ctx.fillStyle = state.bgColor;
+      ctx.fillRect(0, 0, width, height);
+
+      // Save context state before clipping image/content to boundaries
+      ctx.save();
+
+      // Setup boundary clip path
+      if (template.shape === 'circular') {
+        ctx.beginPath();
+        ctx.arc(width / 2, height / 2, width / 2, 0, 2 * Math.PI);
+        ctx.clip();
+      } else if (template.shape === 'oval') {
+        ctx.beginPath();
+        ctx.ellipse(width / 2, height / 2, width / 2, height / 2, 0, 0, 2 * Math.PI);
+        ctx.clip();
+      } else if (template.shape === 'rectangular' && template.id !== '5165') {
+        // Address/Shipping labels have rounded corners (radius approx 0.09 inches)
+        const cornerRad = 0.09 * scaleDPI;
+        drawRoundedRectPath(ctx, 0, 0, width, height, cornerRad);
+        ctx.clip();
+      }
+
+      // 3. Draw Background Image
+      if (state.bgImage) {
+        const imgWidth = width * (state.bgScale / 100);
+        const imgHeight = imgWidth * (state.bgImage.naturalHeight / state.bgImage.naturalWidth);
+        const imgX = (state.bgX / 100) * width - imgWidth / 2;
+        const imgY = (state.bgY / 100) * height - imgHeight / 2;
+        ctx.drawImage(state.bgImage, imgX, imgY, imgWidth, imgHeight);
+      }
+
+      // 4. Render Product Title Layer
+      if (state.titleEnabled && state.titleText.trim() !== '') {
+        const titleFontSize = state.titleSize * (scaleDPI / 72);
+        ctx.font = `${state.titleFontWeight} ${titleFontSize}px "${state.titleFont}"`;
+        ctx.fillStyle = state.titleColor;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(state.titleText, (state.titleX / 100) * width, (state.titleY / 100) * height);
+      }
+
+      // 5. Render Subtitle Layer
+      if (state.subtitleEnabled && state.subtitleText.trim() !== '') {
+        const subtitleFontSize = state.subtitleSize * (scaleDPI / 72);
+        ctx.font = `normal ${subtitleFontSize}px "${state.subtitleFont}"`;
+        ctx.fillStyle = state.subtitleColor;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(state.subtitleText, (state.subtitleX / 100) * width, (state.subtitleY / 100) * height);
+      }
+
+      // 6. Render Ingredients / Details Layer
+      if (state.ingredientsEnabled && state.ingredientsText.trim() !== '') {
+        const ingredientsFontSize = state.ingredientsSize * (scaleDPI / 72);
+        const ingredientsLineHeight = ingredientsFontSize * state.ingredientsLineHeight;
+        ctx.font = `normal ${ingredientsFontSize}px "${state.ingredientsFont}"`;
+        ctx.fillStyle = state.ingredientsColor;
+        ctx.textBaseline = 'top';
+
+        const ingX = (state.ingredientsX / 100) * width;
+        const ingY = (state.ingredientsY / 100) * height;
+        const maxWrapWidth = width * 0.82; // 9% margins inside label
+
+        if (state.ingredientsWrap) {
+          drawWrappedText(ctx, state.ingredientsText, ingX, ingY, maxWrapWidth, ingredientsLineHeight, state.ingredientsAlign);
+        } else {
+          ctx.textAlign = state.ingredientsAlign;
+          const lines = state.ingredientsText.split('\n');
+          for (let i = 0; i < lines.length; i++) {
+            ctx.fillText(lines[i], ingX, ingY + (i * ingredientsLineHeight));
+          }
+        }
+      }
+
+      // Restore clipping boundary
+      ctx.restore();
+
+      // 7. Draw Visual Cut-Line Boundary (Editor Preview ONLY, not printed)
+      if (!forPrint) {
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([4, 4]);
+
+        if (template.shape === 'circular') {
+          ctx.beginPath();
+          ctx.arc(width / 2, height / 2, (width / 2) - 1, 0, 2 * Math.PI);
+          ctx.stroke();
+        } else if (template.shape === 'oval') {
+          ctx.beginPath();
+          ctx.ellipse(width / 2, height / 2, (width / 2) - 1, (height / 2) - 1, 0, 0, 2 * Math.PI);
+          ctx.stroke();
+        } else if (template.shape === 'rectangular' && template.id !== '5165') {
+          const cornerRad = 0.09 * scaleDPI;
+          drawRoundedRectPath(ctx, 1, 1, width - 2, height - 2, cornerRad);
+          ctx.stroke();
+        } else if (template.id !== '5165') {
+          ctx.beginPath();
+          ctx.rect(1, 1, width - 2, height - 2);
+          ctx.stroke();
+        }
+        ctx.setLineDash([]); // reset line dash pattern
+
+        // 7.5 Draw Visual Safety Zone Boundary (Editor Preview ONLY, not printed)
+        if (state.showSafetyZone) {
+          ctx.strokeStyle = '#10b981'; // emerald-500
+          ctx.lineWidth = 1.2;
+          ctx.setLineDash([2, 3]);
+
+          const inset = 0.0625 * scaleDPI; // 0.0625 inches (1/16") inside label
+
+          if (template.shape === 'circular') {
+            ctx.beginPath();
+            ctx.arc(width / 2, height / 2, Math.max(0.1, (width / 2) - inset), 0, 2 * Math.PI);
+            ctx.stroke();
+          } else if (template.shape === 'oval') {
+            ctx.beginPath();
+            ctx.ellipse(width / 2, height / 2, Math.max(0.1, (width / 2) - inset), Math.max(0.1, (height / 2) - inset), 0, 0, 2 * Math.PI);
+            ctx.stroke();
+          } else if (template.shape === 'rectangular' && template.id !== '5165') {
+            const cornerRad = Math.max(0.01, 0.09 - 0.0625) * scaleDPI;
+            drawRoundedRectPath(ctx, inset, inset, width - 2 * inset, height - 2 * inset, cornerRad);
+            ctx.stroke();
+          } else if (template.id !== '5165') {
+            ctx.beginPath();
+            ctx.rect(inset, inset, width - 2 * inset, height - 2 * inset);
+            ctx.stroke();
+          }
+          ctx.setLineDash([]); // reset line dash pattern
+        }
+      }
+    }
+
+    // Draws a full sheet preview (8.5" x 11" page grid) onto a canvas context
+    function drawSheet(ctx, template, state) {
+      const pageWidth = ctx.canvas.width;  // 1275 px (150 DPI)
+      const pageHeight = ctx.canvas.height; // 1650 px (150 DPI)
+
+      // 1. Draw clean white sheet page background
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, pageWidth, pageHeight);
+
+      // 2. Generate a high-DPI (300 DPI) temporary offscreen label render
+      const tempCanvas = document.createElement('canvas');
+      const tempCtx = tempCanvas.getContext('2d');
+      tempCanvas.width = template.width * 300;
+      tempCanvas.height = template.height * 300;
+      
+      // Draw label layout without dashed cut-lines for printing stamp copy
+      drawLabel(tempCtx, template, state, true);
+
+      // Convert margins and pitch values to 150 DPI coordinates for visual rendering
+      const dpiScale = 150;
+      const leftMargin = template.leftMargin * dpiScale;
+      const topMargin = template.topMargin * dpiScale;
+      const pitchX = template.pitchX * dpiScale;
+      const pitchY = template.pitchY * dpiScale;
+      const width = template.width * dpiScale;
+      const height = template.height * dpiScale;
+
+      // 3. Loop over grid positions and stamp label images
+      for (let r = 0; r < template.rows; r++) {
+        for (let c = 0; c < template.cols; c++) {
+          const x = leftMargin + c * pitchX;
+          const y = topMargin + r * pitchY;
+
+          // Draw the label artwork onto the sheet layout canvas
+          ctx.drawImage(tempCanvas, x, y, width, height);
+
+          // Draw grid label visual boundary indicators on the screen preview
+          ctx.strokeStyle = '#cbd5e1';
+          ctx.lineWidth = 1;
+          ctx.setLineDash([3, 3]);
+
+          if (template.shape === 'circular') {
+            ctx.beginPath();
+            ctx.arc(x + width / 2, y + height / 2, width / 2, 0, 2 * Math.PI);
+            ctx.stroke();
+          } else if (template.shape === 'oval') {
+            ctx.beginPath();
+            ctx.ellipse(x + width / 2, y + height / 2, width / 2, height / 2, 0, 0, 2 * Math.PI);
+            ctx.stroke();
+          } else if (template.shape === 'rectangular' && template.id !== '5165') {
+            const cornerRad = 0.09 * dpiScale;
+            drawRoundedRectPath(ctx, x, y, width, height, cornerRad);
+            ctx.stroke();
+          } else if (template.id !== '5165') {
+            ctx.strokeRect(x, y, width, height);
+          }
+          ctx.setLineDash([]);
+
+          // Draw safety zone boundary indicators inside grid preview
+          if (state.showSafetyZone) {
+            ctx.strokeStyle = '#10b981'; // emerald-500
+            ctx.lineWidth = 0.8;
+            ctx.setLineDash([1.5, 2.5]);
+            const inset = 0.0625 * dpiScale;
+
+            if (template.shape === 'circular') {
+              ctx.beginPath();
+              ctx.arc(x + width / 2, y + height / 2, Math.max(0.1, (width / 2) - inset), 0, 2 * Math.PI);
+              ctx.stroke();
+            } else if (template.shape === 'oval') {
+              ctx.beginPath();
+              ctx.ellipse(x + width / 2, y + height / 2, Math.max(0.1, (width / 2) - inset), Math.max(0.1, (height / 2) - inset), 0, 0, 2 * Math.PI);
+              ctx.stroke();
+            } else if (template.shape === 'rectangular' && template.id !== '5165') {
+              const cornerRad = Math.max(0.01, 0.09 - 0.0625) * dpiScale;
+              drawRoundedRectPath(ctx, x + inset, y + inset, width - 2 * inset, height - 2 * inset, cornerRad);
+              ctx.stroke();
+            } else if (template.id !== '5165') {
+              ctx.strokeRect(x + inset, y + inset, width - 2 * inset, height - 2 * inset);
+            }
+            ctx.setLineDash([]);
+          }
+        }
+      }
+
+      // Draw subtle sheet guidelines along paper page limits
+      ctx.strokeStyle = '#f1f5f9';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(0, 0, pageWidth, pageHeight);
+    }
+
+    // Triggers canvas render routine based on state configurations
+    function renderCanvas() {
+      const template = templates[state.templateId];
+      
+      if (state.viewMode === 'single') {
+        canvas.width = template.width * 300; // Render at 300 DPI equivalent resolution
+        canvas.height = template.height * 300;
+        
+        // Match CSS aspect ratio dynamically
+        canvas.style.aspectRatio = `${template.width} / ${template.height}`;
+        
+        drawLabel(ctx, template, state, false);
+      } else {
+        canvas.width = 8.5 * 150; // Render page grid view at 150 DPI for desktop performance
+        canvas.height = 11 * 150;
+        
+        canvas.style.aspectRatio = '8.5 / 11';
+        
+        drawSheet(ctx, template, state);
+      }
+    }
+
+    // 6. Background Image Upload Event handlers
+    const dropZone = document.getElementById('imageDropZone');
+    const fileInput = document.getElementById('bgFileInput');
+    
+    dropZone.addEventListener('click', () => fileInput.click());
+    
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('border-indigo-500', 'bg-slate-800/60');
+    });
+    
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('border-indigo-500', 'bg-slate-800/60');
+    });
+    
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('border-indigo-500', 'bg-slate-800/60');
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+        handleImageFile(e.dataTransfer.files[0]);
+      }
+    });
+
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files[0]) {
+        handleImageFile(e.target.files[0]);
+      }
+    });
+
+    function handleImageFile(file) {
+      if (!file.type.startsWith('image/')) {
+        alert('Invalid file format. Please upload an image file (PNG, JPG, WEBP).');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        const img = new Image();
+        img.onload = function() {
+          state.bgImage = img;
+          state.bgImageDataURL = evt.target.result;
+          state.bgScale = 100;
+          state.bgX = 50;
+          state.bgY = 50;
+          
+          // Display active image position sliders
+          document.getElementById('imageControls').classList.remove('hidden');
+          document.getElementById('imagePlaceholderText').classList.add('hidden');
+          
+          // Render image thumbnail preview inside dropzone
+          const thumb = document.getElementById('imgThumbnail');
+          thumb.src = evt.target.result;
+          thumb.classList.remove('hidden');
+          document.getElementById('uploadIcon').classList.add('hidden');
+
+          updateState('bgScale', 100);
+          updateState('bgX', 50);
+          updateState('bgY', 50);
+        };
+        img.src = evt.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // Remove background image routine
+    document.getElementById('removeImgBtn').addEventListener('click', (e) => {
+      e.stopPropagation(); // Avoid triggering file selection panel
+      state.bgImage = null;
+      state.bgImageDataURL = null;
+      document.getElementById('imageControls').classList.add('hidden');
+      document.getElementById('imagePlaceholderText').classList.remove('hidden');
+      
+      const thumb = document.getElementById('imgThumbnail');
+      thumb.src = '';
+      thumb.classList.add('hidden');
+      document.getElementById('uploadIcon').classList.remove('hidden');
+      fileInput.value = ''; // clear select pointer
+
+      renderCanvas();
+      saveStateToDB();
+    });
+
+    // 7. Alignments controls buttons
+    document.querySelectorAll('[data-align]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const align = btn.dataset.align;
+        updateState('ingredientsAlign', align);
+        updateAlignButtons(align);
+      });
+    });
+
+    function updateAlignButtons(activeAlign) {
+      document.querySelectorAll('[data-align]').forEach(btn => {
+        if (btn.dataset.align === activeAlign) {
+          btn.classList.add('bg-slate-700', 'text-white');
+          btn.classList.remove('text-slate-400');
+        } else {
+          btn.classList.remove('bg-slate-700', 'text-white');
+          btn.classList.add('text-slate-400');
+        }
+      });
+    }
+
+    // 8. View Mode toggle buttons
+    const btnViewSingle = document.getElementById('btnViewSingle');
+    const btnViewSheet = document.getElementById('btnViewSheet');
+
+    btnViewSingle.addEventListener('click', () => {
+      updateState('viewMode', 'single');
+      btnViewSingle.classList.add('bg-slate-800', 'text-white');
+      btnViewSingle.classList.remove('text-slate-400');
+      btnViewSheet.classList.remove('bg-slate-800', 'text-white');
+      btnViewSheet.classList.add('text-slate-400');
+      renderCanvas();
+    });
+
+    btnViewSheet.addEventListener('click', () => {
+      updateState('viewMode', 'sheet');
+      btnViewSheet.classList.add('bg-slate-800', 'text-white');
+      btnViewSheet.classList.remove('text-slate-400');
+      btnViewSingle.classList.remove('bg-slate-800', 'text-white');
+      btnViewSingle.classList.add('text-slate-400');
+      renderCanvas();
+    });
+
+    // 9. Reset positioning function
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      state.bgColor = '#ffffff';
+      state.bgImage = null;
+      state.bgImageDataURL = null;
+
+      // Clear image preview UI elements
+      document.getElementById('imageControls').classList.add('hidden');
+      document.getElementById('imagePlaceholderText').classList.remove('hidden');
+      const thumb = document.getElementById('imgThumbnail');
+      thumb.src = '';
+      thumb.classList.add('hidden');
+      document.getElementById('uploadIcon').classList.remove('hidden');
+      fileInput.value = '';
+
+      state.bgScale = 100;
+      state.bgX = 50;
+      state.bgY = 50;
+      
+      state.titleEnabled = true;
+      state.titleText = 'ORGANIC LAVENDER';
+      state.titleFont = 'Playfair Display';
+      state.titleSize = 24;
+      state.titleColor = '#334155';
+      state.titleX = 50;
+      state.titleY = 30;
+      state.titleFontWeight = 'bold';
+
+      state.subtitleEnabled = true;
+      state.subtitleText = 'Premium Handcrafted Soap';
+      state.subtitleFont = 'Inter';
+      state.subtitleSize = 10;
+      state.subtitleColor = '#64748b';
+      state.subtitleX = 50;
+      state.subtitleY = 48;
+
+      state.ingredientsEnabled = true;
+      state.ingredientsText = 'Ingredients: Organic saponified coconut oil, extra virgin olive oil, lavender essential oil, dried lavender buds, natural mineral oxides.';
+      state.ingredientsFont = 'Inter';
+      state.ingredientsSize = 6;
+      state.ingredientsColor = '#64748b';
+      state.ingredientsX = 50;
+      state.ingredientsY = 72;
+      state.ingredientsAlign = 'center';
+      state.ingredientsWrap = true;
+      state.ingredientsLineHeight = 1.3;
+      state.showSafetyZone = true;
+
+      syncStateToInputs(true);
+      saveStateToDB();
+    });
+
+    // 10. PDF Export Engine
+    document.getElementById('exportBtn').addEventListener('click', async () => {
+      const exportBtn = document.getElementById('exportBtn');
+      const originalText = exportBtn.innerHTML;
+
+      exportBtn.disabled = true;
+      exportBtn.innerHTML = `
+        <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        Rendering High-Res PDF...
+      `;
+
+      // Allow UI thread spinner to paint
+      await new Promise(resolve => setTimeout(resolve, 80));
+
+      try {
+        const { jsPDF } = window.jspdf;
+        const template = templates[state.templateId];
+
+        const doc = new jsPDF({
+          orientation: 'portrait',
+          unit: 'in',
+          format: 'letter' // 8.5" x 11"
+        });
+
+        // Initialize temporary offscreen canvas at high resolution (300 DPI)
+        const tempCanvas = document.createElement('canvas');
+        const tempCtx = tempCanvas.getContext('2d');
+        tempCanvas.width = template.width * 300;
+        tempCanvas.height = template.height * 300;
+
+        // Draw label with forPrint set to true (removes visual guidelines)
+        drawLabel(tempCtx, template, state, true);
+
+        // Compress canvas visual layout to PNG base64 stream
+        const imgData = tempCanvas.toDataURL('image/png');
+
+        const leftMargin = template.leftMargin;
+        const topMargin = template.topMargin;
+        const pitchX = template.pitchX;
+        const pitchY = template.pitchY;
+        const width = template.width;
+        const height = template.height;
+
+        // Draw label matrix grid inside PDF document
+        for (let r = 0; r < template.rows; r++) {
+          for (let c = 0; c < template.cols; c++) {
+            const x = leftMargin + c * pitchX;
+            const y = topMargin + r * pitchY;
+            doc.addImage(imgData, 'PNG', x, y, width, height, undefined, 'FAST');
+          }
+        }
+
+        const cleanTitle = state.titleText.trim().replace(/[^a-z0-9]/gi, '_') || 'label';
+        doc.save(`${cleanTitle}_Avery_${template.id}.pdf`);
+      } catch (err) {
+        console.error(err);
+        alert('An error occurred during print PDF generation: ' + err.message);
+      } finally {
+        exportBtn.disabled = false;
+        exportBtn.innerHTML = originalText;
+      }
+    });
+
+    // 11. Initial setup lifecycle hooks
+    window.addEventListener('DOMContentLoaded', async () => {
+      // Initialize lucide vector icons font
+      lucide.createIcons();
+      
+      // Populate templates list
+      populateTemplateDropdown('');
+      
+      // Setup template search event listener
+      document.getElementById('templateSearch').addEventListener('input', (e) => {
+        populateTemplateDropdown(e.target.value);
+      });
+
+      // Initialize dynamic state bindings and listeners
+      initBindings();
+
+      // Load persisted state from DB if any
+      const saved = await loadStateFromDB();
+      if (saved) {
+        if (saved.bgImageDataURL) {
+          const img = new Image();
+          img.onload = function() {
+            state.bgImage = img;
+            state.bgImageDataURL = saved.bgImageDataURL;
+            
+            Object.keys(saved).forEach(key => {
+              if (key !== 'bgImageDataURL' && key !== 'bgImage') {
+                state[key] = saved[key];
+              }
+            });
+
+            document.getElementById('imageControls').classList.remove('hidden');
+            document.getElementById('imagePlaceholderText').classList.add('hidden');
+            
+            const thumb = document.getElementById('imgThumbnail');
+            thumb.src = saved.bgImageDataURL;
+            thumb.classList.remove('hidden');
+            document.getElementById('uploadIcon').classList.add('hidden');
+
+            syncStateToInputs(true);
+
+            // Sync View Mode Toggle UI
+            if (state.viewMode === 'sheet') {
+              btnViewSheet.classList.add('bg-slate-800', 'text-white');
+              btnViewSheet.classList.remove('text-slate-400');
+              btnViewSingle.classList.remove('bg-slate-800', 'text-white');
+              btnViewSingle.classList.add('text-slate-400');
+            } else {
+              btnViewSingle.classList.add('bg-slate-800', 'text-white');
+              btnViewSingle.classList.remove('text-slate-400');
+              btnViewSheet.classList.remove('bg-slate-800', 'text-white');
+              btnViewSheet.classList.add('text-slate-400');
+            }
+
+            renderCanvas();
+          };
+          img.src = saved.bgImageDataURL;
+        } else {
+          Object.keys(saved).forEach(key => {
+            if (key !== 'bgImageDataURL' && key !== 'bgImage') {
+              state[key] = saved[key];
+            }
+          });
+          syncStateToInputs(true);
+
+          if (state.viewMode === 'sheet') {
+            btnViewSheet.classList.add('bg-slate-800', 'text-white');
+            btnViewSheet.classList.remove('text-slate-400');
+            btnViewSingle.classList.remove('bg-slate-800', 'text-white');
+            btnViewSingle.classList.add('text-slate-400');
+          } else {
+            btnViewSingle.classList.add('bg-slate-800', 'text-white');
+            btnViewSingle.classList.remove('text-slate-400');
+            btnViewSheet.classList.remove('bg-slate-800', 'text-white');
+            btnViewSheet.classList.add('text-slate-400');
+          }
+
+          renderCanvas();
+        }
+      } else {
+        syncStateToInputs(true);
+        renderCanvas();
+      }
+
+      // Force canvas refresh once custom web fonts are ready inside browser
+      document.fonts.ready.then(() => {
+        renderCanvas();
+      });
+    });
+  </script>
+</body>
+</html>

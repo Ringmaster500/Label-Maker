@@ -1,0 +1,13 @@
+name = "avery-label-studio"
+pages_build_output_dir = "dist"
+
+[vars]
+JWT_SECRET = "local-secret-key-1234567890-qwertyuiop-super-long"
+
+[[kv_namespaces]]
+binding = "AUTO_LABELS_KV"
+id = "auto-labels-kv-local"
+
+[[r2_buckets]]
+binding = "AUTO_LABELS_R2"
+bucket_name = "auto-labels-r2-local"
