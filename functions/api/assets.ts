@@ -18,9 +18,30 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
   try {
     // ----------------------------------------------------
-    // GET: Retrieve / Proxy R2 Image
+    // GET: List gallery images OR proxy a single R2 image
     // ----------------------------------------------------
     if (method === 'GET') {
+      const userPrefix = `assets/${user.email}/`;
+
+      // --- List all images in gallery ---
+      if (url.searchParams.get('list') === 'true') {
+        const listed = await env.AUTO_LABELS_R2.list({ prefix: userPrefix });
+        const items = (listed.objects || []).map((obj: any) => ({
+          key: obj.key,
+          url: `/api/assets?key=${encodeURIComponent(obj.key)}`,
+          name: obj.key.replace(userPrefix, ''),
+          uploadedAt: obj.uploaded ? new Date(obj.uploaded).toISOString() : null,
+          size: obj.size,
+        }));
+        // Newest first
+        items.sort((a: any, b: any) => (b.uploadedAt || '').localeCompare(a.uploadedAt || ''));
+        return new Response(JSON.stringify(items), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+
+      // --- Proxy / fetch a single image by key ---
       const key = url.searchParams.get('key');
       if (!key) {
         return new Response(
@@ -30,7 +51,6 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       }
 
       // Security Check: Verify the key belongs to the current user
-      const userPrefix = `assets/${user.email}/`;
       if (!key.startsWith(userPrefix)) {
         return new Response(
           JSON.stringify({ error: 'Unauthorized access to this asset.' }),
@@ -56,6 +76,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
         headers
       });
     }
+
 
     // ----------------------------------------------------
     // POST: Upload Image to R2

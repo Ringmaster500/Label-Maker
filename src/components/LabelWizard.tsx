@@ -638,7 +638,144 @@ const PresetSharePanel = ({
   );
 };
 
+// ==================== IMAGE GALLERY MODAL ====================
+interface GalleryImage {
+  key: string;
+  url: string;
+  name: string;
+  uploadedAt: string | null;
+  size: number;
+}
+
+interface ImageGalleryProps {
+  token: string;
+  onSelect: (url: string) => void;
+  onClose: () => void;
+  onUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  uploading: boolean;
+}
+
+const ImageGallery = ({ token, onSelect, onClose, onUpload, uploading }: ImageGalleryProps) => {
+  const [images, setImages] = useState<GalleryImage[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchGallery = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const res = await fetch('/api/assets?list=true', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error('Failed to load gallery.');
+        const data = await res.json() as GalleryImage[];
+        setImages(data);
+      } catch (err: any) {
+        setError(err.message || 'Could not load your gallery.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchGallery();
+  }, [token]);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end lg:items-center justify-center" onClick={onClose}>
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-[#3c2f2f]/50 backdrop-blur-sm" />
+
+      {/* Panel */}
+      <div
+        className="relative bg-white rounded-t-3xl lg:rounded-2xl w-full lg:max-w-2xl max-h-[85vh] flex flex-col shadow-2xl border border-[#e2d6c9] overflow-hidden"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[#e2d6c9] shrink-0 bg-[#faf6f2]">
+          <div>
+            <h3 className="text-sm font-bold text-[#3c2f2f]">Image Gallery</h3>
+            <p className="text-[10px] text-[#9e8b89]">
+              {images.length > 0 ? `${images.length} image${images.length === 1 ? '' : 's'} in your library` : 'Your uploaded images'}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            {/* Upload new inside gallery */}
+            <label className="relative cursor-pointer px-3 py-1.5 bg-[#dfa283] hover:bg-[#d48e6c] text-white rounded-xl text-xs font-bold tracking-wide transition-all flex items-center gap-1.5 shadow-sm">
+              <Upload className="w-3.5 h-3.5" />
+              {uploading ? 'Uploading…' : 'Upload New'}
+              <input type="file" accept="image/*" onChange={(e) => { onUpload(e); }} className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" disabled={uploading} />
+            </label>
+            <button onClick={onClose} className="p-2 rounded-xl bg-white border border-[#e2d6c9] text-[#6d5c5a] hover:text-[#3c2f2f] hover:bg-[#faf6f2] transition-all cursor-pointer shadow-sm">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Body */}
+        <div className="flex-1 overflow-y-auto p-4 min-h-0">
+          {loading && (
+            <div className="flex flex-col items-center justify-center py-16 gap-3 text-[#9e8b89]">
+              <svg className="animate-spin h-7 w-7 text-[#dfa283]" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
+              <p className="text-xs font-medium">Loading your gallery…</p>
+            </div>
+          )}
+          {!loading && error && (
+            <div className="flex flex-col items-center justify-center py-16 gap-2 text-[#9e8b89]">
+              <p className="text-xs font-semibold text-rose-500">{error}</p>
+              <p className="text-[11px]">Try refreshing or uploading a new image.</p>
+            </div>
+          )}
+          {!loading && !error && images.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-16 gap-3 text-[#9e8b89]">
+              <div className="p-4 rounded-2xl bg-[#faf6f2] border border-[#e2d6c9]">
+                <Upload className="w-8 h-8 text-[#dfa283]" />
+              </div>
+              <div className="text-center space-y-1">
+                <p className="text-xs font-bold text-[#3c2f2f]">No images yet</p>
+                <p className="text-[11px] text-[#9e8b89]">Upload your first image using the button above.</p>
+              </div>
+            </div>
+          )}
+          {!loading && !error && images.length > 0 && (
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+              {images.map(img => (
+                <button
+                  key={img.key}
+                  type="button"
+                  onClick={() => { onSelect(img.url); onClose(); }}
+                  className="group relative aspect-square rounded-xl overflow-hidden border-2 border-[#e2d6c9] hover:border-[#dfa283] transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-[#dfa283] cursor-pointer bg-[#faf6f2]"
+                  title={img.name}
+                >
+                  <img
+                    src={img.url}
+                    alt={img.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                  {/* Hover overlay with filename */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#3c2f2f]/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-2">
+                    <p className="text-[9px] text-white font-semibold leading-tight truncate w-full">{img.name}</p>
+                  </div>
+                  {/* Select checkmark on hover */}
+                  <div className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-[#dfa283] text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm">
+                    <Check className="w-3 h-3 stroke-[3px]" />
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const PRESETS = [
+
   {
     id: 'elegant',
     name: 'Elegant Serif',
@@ -788,6 +925,9 @@ export default function LabelWizard({
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
+
+  // Gallery modal
+  const [showGallery, setShowGallery] = useState(false);
 
   // Load existing design on edit
   useEffect(() => {
@@ -1198,9 +1338,21 @@ export default function LabelWizard({
                                 <p className="text-xs font-bold text-[#3c2f2f] truncate">Artwork Loaded</p>
                                 <p className="text-[10px] text-[#dfa283] font-semibold">Saved in Cloud Workspace</p>
                               </div>
-                              <button onClick={handleRemoveImage} className="p-2 rounded-lg bg-white border border-[#e2d6c9] hover:border-rose-200 hover:bg-rose-50 text-[#6d5c5a] hover:text-rose-600 transition-all cursor-pointer shadow-sm" title="Remove Image">
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
+                              <div className="flex gap-1.5">
+                                <button
+                                  type="button"
+                                  onClick={() => setShowGallery(true)}
+                                  className="p-2 rounded-lg bg-white border border-[#e2d6c9] hover:border-[#dfa283]/60 hover:bg-[#faf6f2] text-[#6d5c5a] hover:text-[#dfa283] transition-all cursor-pointer shadow-sm"
+                                  title="Browse Gallery"
+                                >
+                                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                  </svg>
+                                </button>
+                                <button onClick={handleRemoveImage} className="p-2 rounded-lg bg-white border border-[#e2d6c9] hover:border-rose-200 hover:bg-rose-50 text-[#6d5c5a] hover:text-rose-600 transition-all cursor-pointer shadow-sm" title="Remove Image">
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
                             </div>
                             <div className="space-y-4 border-t border-[#f4ebe1] pt-3.5">
                               <CustomSlider label="Image Zoom Scale" value={editorState.bgScale} min={10} max={300} unit="%" snapValue={100} snapThreshold={4} onChange={(val) => handleStateChange('bgScale', val)} />
@@ -1209,24 +1361,45 @@ export default function LabelWizard({
                             </div>
                           </div>
                         ) : (
-                          <div className="border-2 border-dashed border-[#e2d6c9] hover:border-[#dfa283] rounded-2xl p-6 text-center cursor-pointer transition-all bg-[#faf6f2]/40 group relative shadow-sm">
-                            <input type="file" accept="image/*" onChange={handleImageFile} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" disabled={uploading} />
-                            <div className="flex flex-col items-center justify-center space-y-2">
-                              <div className="p-3 rounded-2xl bg-white border border-[#e2d6c9] text-[#9e8b89] group-hover:text-[#dfa283] transition-colors shadow-sm">
-                                {uploading ? (
-                                  <svg className="animate-spin h-5 w-5 text-[#dfa283]" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                                  </svg>
-                                ) : (
-                                  <Upload className="w-5 h-5 group-hover:scale-105 transition-transform" />
-                                )}
-                              </div>
-                              <div className="text-xs text-[#6d5c5a] leading-relaxed">
-                                <span className="text-[#dfa283] font-bold">Click to select file</span> or drag image here<br />
-                                <span className="text-[10px] text-[#9e8b89]">Supports PNG, JPG, or WEBP. Uploads securely.</span>
+                          /* No image: Upload + Browse Gallery side by side */
+                          <div className="grid grid-cols-2 gap-2">
+                            {/* Upload dropzone */}
+                            <div className="relative border-2 border-dashed border-[#e2d6c9] hover:border-[#dfa283] rounded-2xl p-4 text-center cursor-pointer transition-all bg-[#faf6f2]/40 group shadow-sm">
+                              <input type="file" accept="image/*" onChange={handleImageFile} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" disabled={uploading} />
+                              <div className="flex flex-col items-center justify-center gap-2">
+                                <div className="p-2.5 rounded-xl bg-white border border-[#e2d6c9] text-[#9e8b89] group-hover:text-[#dfa283] transition-colors shadow-sm">
+                                  {uploading ? (
+                                    <svg className="animate-spin h-4 w-4 text-[#dfa283]" fill="none" viewBox="0 0 24 24">
+                                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                    </svg>
+                                  ) : (
+                                    <Upload className="w-4 h-4 group-hover:scale-105 transition-transform" />
+                                  )}
+                                </div>
+                                <div className="text-[11px] text-[#6d5c5a] leading-tight">
+                                  <span className="font-bold text-[#dfa283]">Upload New</span>
+                                  <p className="text-[9px] text-[#9e8b89] mt-0.5">PNG, JPG, WEBP</p>
+                                </div>
                               </div>
                             </div>
+
+                            {/* Browse Gallery button */}
+                            <button
+                              type="button"
+                              onClick={() => setShowGallery(true)}
+                              className="border-2 border-dashed border-[#e2d6c9] hover:border-[#dfa283] rounded-2xl p-4 text-center cursor-pointer transition-all bg-[#faf6f2]/40 group shadow-sm flex flex-col items-center justify-center gap-2"
+                            >
+                              <div className="p-2.5 rounded-xl bg-white border border-[#e2d6c9] text-[#9e8b89] group-hover:text-[#dfa283] transition-colors shadow-sm">
+                                <svg className="w-4 h-4 group-hover:scale-105 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                              </div>
+                              <div className="text-[11px] text-[#6d5c5a] leading-tight">
+                                <span className="font-bold text-[#dfa283]">My Gallery</span>
+                                <p className="text-[9px] text-[#9e8b89] mt-0.5">Reuse past images</p>
+                              </div>
+                            </button>
                           </div>
                         )}
                       </div>
@@ -1665,6 +1838,25 @@ export default function LabelWizard({
         </main>
 
       </div>
+
+      {/* Image Gallery Modal */}
+      {showGallery && (
+        <ImageGallery
+          token={token}
+          onSelect={(url) => {
+            handleStateChange('bgImageDataURL', url);
+            handleStateChange('bgScale', 100);
+            handleStateChange('bgX', 50);
+            handleStateChange('bgY', 50);
+          }}
+          onClose={() => setShowGallery(false)}
+          onUpload={async (e) => {
+            await handleImageFile(e);
+            setShowGallery(false);
+          }}
+          uploading={uploading}
+        />
+      )}
 
     </div>
   );
