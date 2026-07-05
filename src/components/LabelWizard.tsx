@@ -1106,469 +1106,277 @@ export default function LabelWizard({
             )}
 
             {/* -------------------- STEP 2: DESIGN (Background + Text combined) -------------------- */}
+            {/* -------------------- STEP 2: DESIGN -------------------- */}
             {step === 2 && (
               <div className="space-y-4">
                 <div className="space-y-1">
                   <h3 className="text-sm font-bold text-[#3c2f2f]">
-                    {openedFromTemplateBase ? 'Customize Your Label' : 'Design Label'}
+                    {openedFromTemplateBase ? 'Fill in Product Details' : 'Design Label'}
                   </h3>
                   <p className="text-[11px] text-[#6d5c5a]">
                     {openedFromTemplateBase
-                      ? 'Adjust the text content and styling for this label.'
+                      ? 'Enter the text for this label — all styling is already set by the template.'
                       : 'Set background, artwork, and all text layers.'}
                   </p>
                 </div>
 
-                {/* Mobile sub-tabs */}
-                <div className="flex bg-[#faf6f2] p-0.5 rounded-xl border border-[#e2d6c9] shadow-inner lg:hidden">
-                  <button
-                    type="button"
-                    onClick={() => setDesignTab('background')}
-                    className={`flex-1 py-2 rounded-lg text-[11px] font-bold tracking-wide transition-all cursor-pointer ${
-                      designTab === 'background' ? 'bg-[#dfa283] text-white shadow-sm' : 'text-[#6d5c5a] hover:text-[#3c2f2f]'
-                    }`}
-                  >
-                    Background
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setDesignTab('text')}
-                    className={`flex-1 py-2 rounded-lg text-[11px] font-bold tracking-wide transition-all cursor-pointer ${
-                      designTab === 'text' ? 'bg-[#dfa283] text-white shadow-sm' : 'text-[#6d5c5a] hover:text-[#3c2f2f]'
-                    }`}
-                  >
-                    Text Layers
-                  </button>
-                </div>
+                {/* ===== TEMPLATE BASE: content-only form ===== */}
+                {openedFromTemplateBase ? (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 p-3 bg-[#dfa283]/10 border border-[#dfa283]/25 rounded-xl">
+                      <div className="w-2 h-2 rounded-full bg-[#dfa283] shrink-0" />
+                      <p className="text-[11px] text-[#dfa283] font-semibold leading-snug">
+                        Template styling is locked — just enter your product text below.
+                      </p>
+                    </div>
 
-                {/* Background Section - always visible on desktop, tab-gated on mobile */}
-                <div className={`space-y-4 ${designTab === 'text' ? 'hidden lg:block' : ''}` }>
-                  <h4 className="hidden lg:block text-[10px] font-extrabold tracking-widest text-[#9e8b89] uppercase">Background</h4>
-
-                  {/* Base Background color */}
-                  <div className="bg-[#faf6f2] border border-[#e2d6c9] p-4 rounded-2xl shadow-sm">
-                    <CustomColorPicker
-                      label="Background Fill Color"
-                      value={editorState.bgColor}
-                      onChange={(val) => handleStateChange('bgColor', val)}
-                    />
-                  </div>
-
-                  {/* Background Image dropzone */}
-                  <div className="space-y-2">
-                    <label className="block text-xs font-semibold text-[#6d5c5a]">Background Artwork / Logo</label>
-                    
-                    {editorState.bgImageDataURL ? (
-                      <div className="p-4 bg-white border border-[#e2d6c9] rounded-2xl space-y-3.5 shadow-sm">
-                        <div className="flex items-center gap-3 bg-[#faf6f2] p-2.5 rounded-xl border border-[#e2d6c9]">
-                          <img 
-                            src={editorState.bgImageDataURL} 
-                            alt="Thumbnail" 
-                            className="w-12 h-12 object-contain bg-white border border-[#e2d6c9] rounded-lg shadow-sm"
-                          />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-bold text-[#3c2f2f] truncate">Artwork Loaded</p>
-                            <p className="text-[10px] text-[#dfa283] font-semibold">Saved in Cloud Workspace</p>
-                          </div>
-                          <button
-                            onClick={handleRemoveImage}
-                            className="p-2 rounded-lg bg-white border border-[#e2d6c9] hover:border-rose-200 hover:bg-rose-50 text-[#6d5c5a] hover:text-rose-600 transition-all cursor-pointer shadow-sm"
-                            title="Remove Image"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-
-                        {/* Image Sliders */}
-                        <div className="space-y-4 border-t border-[#f4ebe1] pt-3.5">
-                          <CustomSlider
-                            label="Image Zoom Scale"
-                            value={editorState.bgScale}
-                            min={10}
-                            max={300}
-                            unit="%"
-                            snapValue={100}
-                            snapThreshold={4}
-                            onChange={(val) => handleStateChange('bgScale', val)}
-                          />
-                          <CustomSlider
-                            label="Image Horizontal Pos X"
-                            value={editorState.bgX}
-                            min={-50}
-                            max={150}
-                            unit="%"
-                            snapValue={50}
-                            snapThreshold={3}
-                            onChange={(val) => handleStateChange('bgX', val)}
-                          />
-                          <CustomSlider
-                            label="Image Vertical Pos Y"
-                            value={editorState.bgY}
-                            min={-50}
-                            max={150}
-                            unit="%"
-                            snapValue={50}
-                            snapThreshold={3}
-                            onChange={(val) => handleStateChange('bgY', val)}
-                          />
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="border-2 border-dashed border-[#e2d6c9] hover:border-[#dfa283] rounded-2xl p-6 text-center cursor-pointer transition-all bg-[#faf6f2]/40 group relative shadow-sm">
+                    {editorState.titleEnabled && (
+                      <div className="bg-white border border-[#e2d6c9] p-4 rounded-xl shadow-sm space-y-1.5">
+                        <label className="block text-xs font-bold text-[#3c2f2f]">Product Title</label>
                         <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handleImageFile}
-                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                          disabled={uploading}
+                          type="text"
+                          value={editorState.titleText}
+                          onChange={(e) => handleStateChange('titleText', e.target.value)}
+                          placeholder="e.g. Lavender Tallow Balm"
+                          className="w-full bg-[#faf6f2] border border-[#e2d6c9] rounded-lg px-3 py-2 text-sm text-[#3c2f2f] placeholder-[#9e8b89] focus:outline-none focus:ring-1 focus:ring-[#dfa283]"
                         />
-                        <div className="flex flex-col items-center justify-center space-y-2">
-                          <div className="p-3 rounded-2xl bg-white border border-[#e2d6c9] text-[#9e8b89] group-hover:text-[#dfa283] transition-colors shadow-sm">
-                            {uploading ? (
-                              <svg className="animate-spin h-5 w-5 text-[#dfa283]" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                              </svg>
-                            ) : (
-                              <Upload className="w-5 h-5 group-hover:scale-105 transition-transform" />
-                            )}
-                          </div>
-                          <div className="text-xs text-[#6d5c5a] leading-relaxed">
-                            <span className="text-[#dfa283] font-bold">Click to select file</span> or drag image here<br />
-                            <span className="text-[10px] text-[#9e8b89]">Supports PNG, JPG, or WEBP. Uploads securely.</span>
-                          </div>
-                        </div>
                       </div>
                     )}
-                  </div>
-                </div>
 
-                {/* Divider (desktop only) */}
-                <div className="hidden lg:block h-px bg-[#e2d6c9]" />
+                    {editorState.subtitleEnabled && (
+                      <div className="bg-white border border-[#e2d6c9] p-4 rounded-xl shadow-sm space-y-1.5">
+                        <label className="block text-xs font-bold text-[#3c2f2f]">Subtitle</label>
+                        <input
+                          type="text"
+                          value={editorState.subtitleText}
+                          onChange={(e) => handleStateChange('subtitleText', e.target.value)}
+                          placeholder="e.g. Whipped Body Butter"
+                          className="w-full bg-[#faf6f2] border border-[#e2d6c9] rounded-lg px-3 py-2 text-sm text-[#3c2f2f] placeholder-[#9e8b89] focus:outline-none focus:ring-1 focus:ring-[#dfa283]"
+                        />
+                      </div>
+                    )}
 
-            {/* Text Layers Section - always visible on desktop, tab-gated on mobile */}
-              <div className={`space-y-6 text-[#3c2f2f] ${designTab === 'background' ? 'hidden lg:block' : ''}` }>
-                  {/* Text section header (desktop only) */}
-                  <h4 className="hidden lg:block text-[10px] font-extrabold tracking-widest text-[#9e8b89] uppercase">Text Layers</h4>
-
-                  {/* Aesthetic Presets - collapsible */}
-                  <div className="bg-white border border-[#e2d6c9] rounded-xl shadow-sm overflow-hidden">
-                    <button
-                      type="button"
-                      onClick={() => setPresetsOpen(v => !v)}
-                      className="w-full flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-[#faf6f2] transition-colors"
-                    >
-                      <span className="flex items-center gap-1.5 text-xs font-bold text-[#3c2f2f]">
-                        <Sparkles className="w-3.5 h-3.5 text-[#dfa283]" />
-                        Aesthetic Presets
-                      </span>
-                      <span className="text-[10px] text-[#9e8b89]">{presetsOpen ? '▲' : '▼'}</span>
-                    </button>
-                    {presetsOpen && (
-                      <div className="grid grid-cols-2 gap-2 px-4 pb-4 border-t border-[#f4ebe1] pt-3">
-                        {PRESETS.map(p => (
-                          <button
-                            key={p.id}
-                            onClick={() => applyPreset(p.config)}
-                            className="px-3 py-2 rounded-xl bg-[#faf6f2] border border-[#e2d6c9] hover:border-[#dfa283]/50 hover:bg-[#f4ebe1] text-left transition-all cursor-pointer"
-                          >
-                            <p className="text-[11px] font-bold text-[#3c2f2f]">{p.name}</p>
-                            <p className="text-[9px] text-[#9e8b89] mt-0.5 capitalize truncate">{p.config.titleFont.split(' ')[0]} font</p>
-                          </button>
-                        ))}
+                    {editorState.ingredientsEnabled && (
+                      <div className="bg-white border border-[#e2d6c9] p-4 rounded-xl shadow-sm space-y-1.5">
+                        <label className="block text-xs font-bold text-[#3c2f2f]">Ingredients / Details</label>
+                        <textarea
+                          value={editorState.ingredientsText}
+                          onChange={(e) => handleStateChange('ingredientsText', e.target.value)}
+                          placeholder="e.g. Ingredients: Beef Tallow, Lavender EO"
+                          className="w-full bg-[#faf6f2] border border-[#e2d6c9] rounded-lg px-3 py-2 text-sm text-[#3c2f2f] placeholder-[#9e8b89] h-28 resize-none focus:outline-none focus:ring-1 focus:ring-[#dfa283]"
+                        />
                       </div>
                     )}
                   </div>
 
-                  {/*  always show full text layer editor  */}
+                ) : (
+                  /* ===== FULL DESIGN FLOW ===== */
                   <>
+                    {/* Mobile sub-tabs */}
+                    <div className="flex bg-[#faf6f2] p-0.5 rounded-xl border border-[#e2d6c9] shadow-inner lg:hidden">
+                      <button type="button" onClick={() => setDesignTab('background')} className={`flex-1 py-2 rounded-lg text-[11px] font-bold tracking-wide transition-all cursor-pointer ${designTab === 'background' ? 'bg-[#dfa283] text-white shadow-sm' : 'text-[#6d5c5a] hover:text-[#3c2f2f]'}`}>
+                        Background
+                      </button>
+                      <button type="button" onClick={() => setDesignTab('text')} className={`flex-1 py-2 rounded-lg text-[11px] font-bold tracking-wide transition-all cursor-pointer ${designTab === 'text' ? 'bg-[#dfa283] text-white shadow-sm' : 'text-[#6d5c5a] hover:text-[#3c2f2f]'}`}>
+                        Text Layers
+                      </button>
+                    </div>
 
-                    {/* 1. Title Layer */}
-                    <div className="space-y-3 bg-white border border-[#e2d6c9] p-4 rounded-xl shadow-sm">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-[#3c2f2f] uppercase tracking-wider">1. Title Layer</span>
-                        <button
-                          onClick={() => handleStateChange('titleEnabled', !editorState.titleEnabled)}
-                          className="cursor-pointer text-[#9e8b89] hover:text-[#3c2f2f]"
-                        >
-                          {editorState.titleEnabled ? <ToggleRight className="w-8 h-8 text-[#dfa283]" /> : <ToggleLeft className="w-8 h-8" />}
-                        </button>
+                    {/* Background Section */}
+                    <div className={`space-y-4 ${designTab === 'text' ? 'hidden lg:block' : ''}`}>
+                      <h4 className="hidden lg:block text-[10px] font-extrabold tracking-widest text-[#9e8b89] uppercase">Background</h4>
+                      <div className="bg-[#faf6f2] border border-[#e2d6c9] p-4 rounded-2xl shadow-sm">
+                        <CustomColorPicker label="Background Fill Color" value={editorState.bgColor} onChange={(val) => handleStateChange('bgColor', val)} />
                       </div>
-
-                      {editorState.titleEnabled && (
-                        <div className="space-y-3.5 pt-2.5 border-t border-[#f4ebe1]">
-                          <div>
-                            <label className="block text-[10px] font-semibold text-[#6d5c5a] mb-1">Title Text</label>
-                            <input
-                              type="text"
-                              value={editorState.titleText}
-                              onChange={(e) => handleStateChange('titleText', e.target.value)}
-                              className="w-full bg-[#faf6f2] border border-[#e2d6c9] rounded-lg px-3 py-1.5 text-xs text-[#3c2f2f] focus:outline-none focus:ring-1 focus:ring-[#dfa283]"
-                            />
-                          </div>
-                          
-                          <div className="grid grid-cols-2 gap-2">
-                            <FontSelector
-                              label="Font Family"
-                              value={editorState.titleFont}
-                              onChange={(val) => handleStateChange('titleFont', val)}
-                            />
-                            <div>
-                              <label className="block text-[10px] font-semibold text-[#6d5c5a] mb-1">Weight</label>
-                              <select
-                                value={editorState.titleFontWeight}
-                                onChange={(e) => handleStateChange('titleFontWeight', e.target.value as any)}
-                                className="w-full bg-white border border-[#e2d6c9] rounded-lg px-2 py-1.5 text-xs text-[#3c2f2f] focus:outline-none cursor-pointer"
-                              >
-                                <option value="normal">Normal</option>
-                                <option value="bold">Bold</option>
-                              </select>
+                      <div className="space-y-2">
+                        <label className="block text-xs font-semibold text-[#6d5c5a]">Background Artwork / Logo</label>
+                        {editorState.bgImageDataURL ? (
+                          <div className="p-4 bg-white border border-[#e2d6c9] rounded-2xl space-y-3.5 shadow-sm">
+                            <div className="flex items-center gap-3 bg-[#faf6f2] p-2.5 rounded-xl border border-[#e2d6c9]">
+                              <img src={editorState.bgImageDataURL} alt="Thumbnail" className="w-12 h-12 object-contain bg-white border border-[#e2d6c9] rounded-lg shadow-sm" />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-bold text-[#3c2f2f] truncate">Artwork Loaded</p>
+                                <p className="text-[10px] text-[#dfa283] font-semibold">Saved in Cloud Workspace</p>
+                              </div>
+                              <button onClick={handleRemoveImage} className="p-2 rounded-lg bg-white border border-[#e2d6c9] hover:border-rose-200 hover:bg-rose-50 text-[#6d5c5a] hover:text-rose-600 transition-all cursor-pointer shadow-sm" title="Remove Image">
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                            <div className="space-y-4 border-t border-[#f4ebe1] pt-3.5">
+                              <CustomSlider label="Image Zoom Scale" value={editorState.bgScale} min={10} max={300} unit="%" snapValue={100} snapThreshold={4} onChange={(val) => handleStateChange('bgScale', val)} />
+                              <CustomSlider label="Image Horizontal Pos X" value={editorState.bgX} min={-50} max={150} unit="%" snapValue={50} snapThreshold={3} onChange={(val) => handleStateChange('bgX', val)} />
+                              <CustomSlider label="Image Vertical Pos Y" value={editorState.bgY} min={-50} max={150} unit="%" snapValue={50} snapThreshold={3} onChange={(val) => handleStateChange('bgY', val)} />
                             </div>
                           </div>
-
-                          <div className="grid grid-cols-2 gap-2">
-                            <CustomColorPicker
-                              label="Text Color"
-                              value={editorState.titleColor}
-                              onChange={(val) => handleStateChange('titleColor', val)}
-                            />
-                            <CustomSlider
-                              label="Font Size"
-                              value={editorState.titleSize}
-                              min={8}
-                              max={72}
-                              unit="pt"
-                              onChange={(val) => handleStateChange('titleSize', val)}
-                            />
-                          </div>
-
-                          <div className="space-y-3 pt-1 border-t border-[#faf6f2]">
-                            <CustomSlider
-                              label="Horizontal Position X"
-                              value={editorState.titleX}
-                              min={0}
-                              max={100}
-                              unit="%"
-                              snapValue={50}
-                              snapThreshold={3}
-                              onChange={(val) => handleStateChange('titleX', val)}
-                            />
-                            <CustomSlider
-                              label="Vertical Position Y"
-                              value={editorState.titleY}
-                              min={0}
-                              max={100}
-                              unit="%"
-                              snapValue={50}
-                              snapThreshold={3}
-                              onChange={(val) => handleStateChange('titleY', val)}
-                            />
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* 2. Subtitle Layer */}
-                    <div className="space-y-3 bg-white border border-[#e2d6c9] p-4 rounded-xl shadow-sm">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-[#3c2f2f] uppercase tracking-wider">2. Subtitle Layer</span>
-                        <button
-                          onClick={() => handleStateChange('subtitleEnabled', !editorState.subtitleEnabled)}
-                          className="cursor-pointer text-[#9e8b89] hover:text-[#3c2f2f]"
-                        >
-                          {editorState.subtitleEnabled ? <ToggleRight className="w-8 h-8 text-[#dfa283]" /> : <ToggleLeft className="w-8 h-8" />}
-                        </button>
-                      </div>
-
-                      {editorState.subtitleEnabled && (
-                        <div className="space-y-3.5 pt-2.5 border-t border-[#f4ebe1]">
-                          <div>
-                            <label className="block text-[10px] font-semibold text-[#6d5c5a] mb-1">Subtitle Text</label>
-                            <input
-                              type="text"
-                              value={editorState.subtitleText}
-                              onChange={(e) => handleStateChange('subtitleText', e.target.value)}
-                              className="w-full bg-[#faf6f2] border border-[#e2d6c9] rounded-lg px-3 py-1.5 text-xs text-[#3c2f2f] focus:outline-none focus:ring-1 focus:ring-[#dfa283]"
-                            />
-                          </div>
-                          
-                          <div className="grid grid-cols-2 gap-2">
-                            <FontSelector
-                              label="Font Family"
-                              value={editorState.subtitleFont}
-                              onChange={(val) => handleStateChange('subtitleFont', val)}
-                            />
-                            <CustomSlider
-                              label="Font Size"
-                              value={editorState.subtitleSize}
-                              min={6}
-                              max={36}
-                              unit="pt"
-                              onChange={(val) => handleStateChange('subtitleSize', val)}
-                            />
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-2">
-                            <CustomColorPicker
-                              label="Text Color"
-                              value={editorState.subtitleColor}
-                              onChange={(val) => handleStateChange('subtitleColor', val)}
-                            />
-                          </div>
-
-                          <div className="space-y-3 pt-1 border-t border-[#faf6f2]">
-                            <CustomSlider
-                              label="Horizontal Position X"
-                              value={editorState.subtitleX}
-                              min={0}
-                              max={100}
-                              unit="%"
-                              snapValue={50}
-                              snapThreshold={3}
-                              onChange={(val) => handleStateChange('subtitleX', val)}
-                            />
-                            <CustomSlider
-                              label="Vertical Position Y"
-                              value={editorState.subtitleY}
-                              min={0}
-                              max={100}
-                              unit="%"
-                              snapValue={50}
-                              snapThreshold={3}
-                              onChange={(val) => handleStateChange('subtitleY', val)}
-                            />
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* 3. Ingredients / Details Layer */}
-                    <div className="space-y-3 bg-white border border-[#e2d6c9] p-4 rounded-xl shadow-sm">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-[#3c2f2f] uppercase tracking-wider">3. Details Layer</span>
-                        <button
-                          onClick={() => handleStateChange('ingredientsEnabled', !editorState.ingredientsEnabled)}
-                          className="cursor-pointer text-[#9e8b89] hover:text-[#3c2f2f]"
-                        >
-                          {editorState.ingredientsEnabled ? <ToggleRight className="w-8 h-8 text-[#dfa283]" /> : <ToggleLeft className="w-8 h-8" />}
-                        </button>
-                      </div>
-
-                      {editorState.ingredientsEnabled && (
-                        <div className="space-y-3.5 pt-2.5 border-t border-[#f4ebe1]">
-                          <div>
-                            <label className="block text-[10px] font-semibold text-[#6d5c5a] mb-1">Details / Ingredients List</label>
-                            <textarea
-                              value={editorState.ingredientsText}
-                              onChange={(e) => handleStateChange('ingredientsText', e.target.value)}
-                              className="w-full bg-[#faf6f2] border border-[#e2d6c9] rounded-lg px-3 py-1.5 text-xs text-[#3c2f2f] h-16 resize-none focus:outline-none focus:ring-1 focus:ring-[#dfa283]"
-                            />
-                          </div>
-                          
-                          <div className="grid grid-cols-2 gap-2">
-                            <FontSelector
-                              label="Font Family"
-                              value={editorState.ingredientsFont}
-                              onChange={(val) => handleStateChange('ingredientsFont', val)}
-                            />
-                            <div>
-                              <label className="block text-[10px] font-semibold text-[#6d5c5a] mb-1">Alignment</label>
-                              <div className="flex bg-[#faf6f2] rounded-lg border border-[#e2d6c9] p-0.5">
-                                {['left', 'center', 'right'].map(align => (
-                                  <button
-                                    key={align}
-                                    type="button"
-                                    onClick={() => handleStateChange('ingredientsAlign', align as any)}
-                                    className={`flex-1 py-1 rounded text-[10px] font-bold uppercase transition-all cursor-pointer ${
-                                      editorState.ingredientsAlign === align 
-                                        ? 'bg-[#dfa283] text-white shadow-sm' 
-                                        : 'text-[#6d5c5a] hover:text-[#3c2f2f]'
-                                    }`}
-                                  >
-                                    {align.substring(0, 3)}
-                                  </button>
-                                ))}
+                        ) : (
+                          <div className="border-2 border-dashed border-[#e2d6c9] hover:border-[#dfa283] rounded-2xl p-6 text-center cursor-pointer transition-all bg-[#faf6f2]/40 group relative shadow-sm">
+                            <input type="file" accept="image/*" onChange={handleImageFile} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" disabled={uploading} />
+                            <div className="flex flex-col items-center justify-center space-y-2">
+                              <div className="p-3 rounded-2xl bg-white border border-[#e2d6c9] text-[#9e8b89] group-hover:text-[#dfa283] transition-colors shadow-sm">
+                                {uploading ? (
+                                  <svg className="animate-spin h-5 w-5 text-[#dfa283]" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                  </svg>
+                                ) : (
+                                  <Upload className="w-5 h-5 group-hover:scale-105 transition-transform" />
+                                )}
+                              </div>
+                              <div className="text-xs text-[#6d5c5a] leading-relaxed">
+                                <span className="text-[#dfa283] font-bold">Click to select file</span> or drag image here<br />
+                                <span className="text-[10px] text-[#9e8b89]">Supports PNG, JPG, or WEBP. Uploads securely.</span>
                               </div>
                             </div>
                           </div>
-
-                          <div className="grid grid-cols-2 gap-2">
-                            <CustomColorPicker
-                              label="Text Color"
-                              value={editorState.ingredientsColor}
-                              onChange={(val) => handleStateChange('ingredientsColor', val)}
-                            />
-                            <CustomSlider
-                              label="Font Size"
-                              value={editorState.ingredientsSize}
-                              min={4}
-                              max={20}
-                              unit="pt"
-                              onChange={(val) => handleStateChange('ingredientsSize', val)}
-                            />
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-2">
-                            <CustomSlider
-                              label="Line Height"
-                              value={editorState.ingredientsLineHeight}
-                              min={1.0}
-                              max={2.5}
-                              step={0.1}
-                              unit="x"
-                              onChange={(val) => handleStateChange('ingredientsLineHeight', val)}
-                            />
-                          </div>
-
-                          <div className="flex items-center justify-between py-1.5 px-2 bg-[#faf6f2] rounded-lg border border-[#e2d6c9]">
-                            <label className="text-[11px] font-semibold text-[#6d5c5a] select-none">Auto-Wrap Details Text</label>
-                            <button
-                              type="button"
-                              onClick={() => handleStateChange('ingredientsWrap', !editorState.ingredientsWrap)}
-                              className={`w-4.5 h-4.5 rounded-md border flex items-center justify-center transition-all cursor-pointer focus:outline-none ${
-                                editorState.ingredientsWrap
-                                  ? 'bg-[#dfa283] border-[#dfa283] text-white shadow-sm shadow-[#dfa283]/20'
-                                  : 'bg-white border-[#e2d6c9] text-transparent hover:border-[#dfa283]/60'
-                              }`}
-                            >
-                              <Check className={`w-3 h-3 stroke-[3.5px] transition-transform duration-200 ${editorState.ingredientsWrap ? 'scale-100 animate-in zoom-in-50' : 'scale-0'}`} />
-                            </button>
-                          </div>
-
-                          <div className="space-y-3 pt-1 border-t border-[#faf6f2]">
-                            <CustomSlider
-                              label="Horizontal Position X"
-                              value={editorState.ingredientsX}
-                              min={0}
-                              max={100}
-                              unit="%"
-                              snapValue={50}
-                              snapThreshold={3}
-                              onChange={(val) => handleStateChange('ingredientsX', val)}
-                            />
-                            <CustomSlider
-                              label="Vertical Position Y"
-                              value={editorState.ingredientsY}
-                              min={0}
-                              max={100}
-                              unit="%"
-                              snapValue={50}
-                              snapThreshold={3}
-                              onChange={(val) => handleStateChange('ingredientsY', val)}
-                            />
-                          </div>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
 
-                    {/* Presets Export/Import Panel */}
-                    <PresetSharePanel
-                      editorState={editorState}
-                      setEditorState={setEditorState}
-                      showAlert={showAlert}
-                    />
+                    {/* Divider (desktop only) */}
+                    <div className="hidden lg:block h-px bg-[#e2d6c9]" />
+
+                    {/* Text Layers Section */}
+                    <div className={`space-y-6 text-[#3c2f2f] ${designTab === 'background' ? 'hidden lg:block' : ''}`}>
+                      <h4 className="hidden lg:block text-[10px] font-extrabold tracking-widest text-[#9e8b89] uppercase">Text Layers</h4>
+
+                      {/* Aesthetic Presets - collapsible */}
+                      <div className="bg-white border border-[#e2d6c9] rounded-xl shadow-sm overflow-hidden">
+                        <button type="button" onClick={() => setPresetsOpen(v => !v)} className="w-full flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-[#faf6f2] transition-colors">
+                          <span className="flex items-center gap-1.5 text-xs font-bold text-[#3c2f2f]">
+                            <Sparkles className="w-3.5 h-3.5 text-[#dfa283]" /> Aesthetic Presets
+                          </span>
+                          <span className="text-[10px] text-[#9e8b89]">{presetsOpen ? '▲' : '▼'}</span>
+                        </button>
+                        {presetsOpen && (
+                          <div className="grid grid-cols-2 gap-2 px-4 pb-4 border-t border-[#f4ebe1] pt-3">
+                            {PRESETS.map(p => (
+                              <button key={p.id} onClick={() => applyPreset(p.config)} className="px-3 py-2 rounded-xl bg-[#faf6f2] border border-[#e2d6c9] hover:border-[#dfa283]/50 hover:bg-[#f4ebe1] text-left transition-all cursor-pointer">
+                                <p className="text-[11px] font-bold text-[#3c2f2f]">{p.name}</p>
+                                <p className="text-[9px] text-[#9e8b89] mt-0.5 capitalize truncate">{p.config.titleFont.split(' ')[0]} font</p>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* 1. Title Layer */}
+                      <div className="space-y-3 bg-white border border-[#e2d6c9] p-4 rounded-xl shadow-sm">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-[#3c2f2f] uppercase tracking-wider">1. Title Layer</span>
+                          <button onClick={() => handleStateChange('titleEnabled', !editorState.titleEnabled)} className="cursor-pointer text-[#9e8b89] hover:text-[#3c2f2f]">
+                            {editorState.titleEnabled ? <ToggleRight className="w-8 h-8 text-[#dfa283]" /> : <ToggleLeft className="w-8 h-8" />}
+                          </button>
+                        </div>
+                        {editorState.titleEnabled && (
+                          <div className="space-y-3.5 pt-2.5 border-t border-[#f4ebe1]">
+                            <div>
+                              <label className="block text-[10px] font-semibold text-[#6d5c5a] mb-1">Title Text</label>
+                              <input type="text" value={editorState.titleText} onChange={(e) => handleStateChange('titleText', e.target.value)} className="w-full bg-[#faf6f2] border border-[#e2d6c9] rounded-lg px-3 py-1.5 text-xs text-[#3c2f2f] focus:outline-none focus:ring-1 focus:ring-[#dfa283]" />
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                              <FontSelector label="Font Family" value={editorState.titleFont} onChange={(val) => handleStateChange('titleFont', val)} />
+                              <div>
+                                <label className="block text-[10px] font-semibold text-[#6d5c5a] mb-1">Weight</label>
+                                <select value={editorState.titleFontWeight} onChange={(e) => handleStateChange('titleFontWeight', e.target.value as any)} className="w-full bg-white border border-[#e2d6c9] rounded-lg px-2 py-1.5 text-xs text-[#3c2f2f] focus:outline-none cursor-pointer">
+                                  <option value="normal">Normal</option>
+                                  <option value="bold">Bold</option>
+                                </select>
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                              <CustomColorPicker label="Text Color" value={editorState.titleColor} onChange={(val) => handleStateChange('titleColor', val)} />
+                              <CustomSlider label="Font Size" value={editorState.titleSize} min={8} max={72} unit="pt" onChange={(val) => handleStateChange('titleSize', val)} />
+                            </div>
+                            <div className="space-y-3 pt-1 border-t border-[#faf6f2]">
+                              <CustomSlider label="Horizontal Position X" value={editorState.titleX} min={0} max={100} unit="%" snapValue={50} snapThreshold={3} onChange={(val) => handleStateChange('titleX', val)} />
+                              <CustomSlider label="Vertical Position Y" value={editorState.titleY} min={0} max={100} unit="%" snapValue={50} snapThreshold={3} onChange={(val) => handleStateChange('titleY', val)} />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* 2. Subtitle Layer */}
+                      <div className="space-y-3 bg-white border border-[#e2d6c9] p-4 rounded-xl shadow-sm">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-[#3c2f2f] uppercase tracking-wider">2. Subtitle Layer</span>
+                          <button onClick={() => handleStateChange('subtitleEnabled', !editorState.subtitleEnabled)} className="cursor-pointer text-[#9e8b89] hover:text-[#3c2f2f]">
+                            {editorState.subtitleEnabled ? <ToggleRight className="w-8 h-8 text-[#dfa283]" /> : <ToggleLeft className="w-8 h-8" />}
+                          </button>
+                        </div>
+                        {editorState.subtitleEnabled && (
+                          <div className="space-y-3.5 pt-2.5 border-t border-[#f4ebe1]">
+                            <div>
+                              <label className="block text-[10px] font-semibold text-[#6d5c5a] mb-1">Subtitle Text</label>
+                              <input type="text" value={editorState.subtitleText} onChange={(e) => handleStateChange('subtitleText', e.target.value)} className="w-full bg-[#faf6f2] border border-[#e2d6c9] rounded-lg px-3 py-1.5 text-xs text-[#3c2f2f] focus:outline-none focus:ring-1 focus:ring-[#dfa283]" />
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                              <FontSelector label="Font Family" value={editorState.subtitleFont} onChange={(val) => handleStateChange('subtitleFont', val)} />
+                              <CustomSlider label="Font Size" value={editorState.subtitleSize} min={6} max={36} unit="pt" onChange={(val) => handleStateChange('subtitleSize', val)} />
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                              <CustomColorPicker label="Text Color" value={editorState.subtitleColor} onChange={(val) => handleStateChange('subtitleColor', val)} />
+                            </div>
+                            <div className="space-y-3 pt-1 border-t border-[#faf6f2]">
+                              <CustomSlider label="Horizontal Position X" value={editorState.subtitleX} min={0} max={100} unit="%" snapValue={50} snapThreshold={3} onChange={(val) => handleStateChange('subtitleX', val)} />
+                              <CustomSlider label="Vertical Position Y" value={editorState.subtitleY} min={0} max={100} unit="%" snapValue={50} snapThreshold={3} onChange={(val) => handleStateChange('subtitleY', val)} />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* 3. Details Layer */}
+                      <div className="space-y-3 bg-white border border-[#e2d6c9] p-4 rounded-xl shadow-sm">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-[#3c2f2f] uppercase tracking-wider">3. Details Layer</span>
+                          <button onClick={() => handleStateChange('ingredientsEnabled', !editorState.ingredientsEnabled)} className="cursor-pointer text-[#9e8b89] hover:text-[#3c2f2f]">
+                            {editorState.ingredientsEnabled ? <ToggleRight className="w-8 h-8 text-[#dfa283]" /> : <ToggleLeft className="w-8 h-8" />}
+                          </button>
+                        </div>
+                        {editorState.ingredientsEnabled && (
+                          <div className="space-y-3.5 pt-2.5 border-t border-[#f4ebe1]">
+                            <div>
+                              <label className="block text-[10px] font-semibold text-[#6d5c5a] mb-1">Details / Ingredients List</label>
+                              <textarea value={editorState.ingredientsText} onChange={(e) => handleStateChange('ingredientsText', e.target.value)} className="w-full bg-[#faf6f2] border border-[#e2d6c9] rounded-lg px-3 py-1.5 text-xs text-[#3c2f2f] h-16 resize-none focus:outline-none focus:ring-1 focus:ring-[#dfa283]" />
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                              <FontSelector label="Font Family" value={editorState.ingredientsFont} onChange={(val) => handleStateChange('ingredientsFont', val)} />
+                              <div>
+                                <label className="block text-[10px] font-semibold text-[#6d5c5a] mb-1">Alignment</label>
+                                <div className="flex bg-[#faf6f2] rounded-lg border border-[#e2d6c9] p-0.5">
+                                  {(['left', 'center', 'right'] as const).map(align => (
+                                    <button key={align} type="button" onClick={() => handleStateChange('ingredientsAlign', align)} className={`flex-1 py-1 rounded text-[10px] font-bold uppercase transition-all cursor-pointer ${editorState.ingredientsAlign === align ? 'bg-[#dfa283] text-white shadow-sm' : 'text-[#6d5c5a] hover:text-[#3c2f2f]'}`}>
+                                      {align.substring(0, 3)}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                              <CustomColorPicker label="Text Color" value={editorState.ingredientsColor} onChange={(val) => handleStateChange('ingredientsColor', val)} />
+                              <CustomSlider label="Font Size" value={editorState.ingredientsSize} min={4} max={20} unit="pt" onChange={(val) => handleStateChange('ingredientsSize', val)} />
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                              <CustomSlider label="Line Height" value={editorState.ingredientsLineHeight} min={1.0} max={2.5} step={0.1} unit="x" onChange={(val) => handleStateChange('ingredientsLineHeight', val)} />
+                            </div>
+                            <div className="flex items-center justify-between py-1.5 px-2 bg-[#faf6f2] rounded-lg border border-[#e2d6c9]">
+                              <label className="text-[11px] font-semibold text-[#6d5c5a] select-none">Auto-Wrap Details Text</label>
+                              <button type="button" onClick={() => handleStateChange('ingredientsWrap', !editorState.ingredientsWrap)} className={`w-4.5 h-4.5 rounded-md border flex items-center justify-center transition-all cursor-pointer focus:outline-none ${editorState.ingredientsWrap ? 'bg-[#dfa283] border-[#dfa283] text-white shadow-sm shadow-[#dfa283]/20' : 'bg-white border-[#e2d6c9] text-transparent hover:border-[#dfa283]/60'}`}>
+                                <Check className={`w-3 h-3 stroke-[3.5px] transition-transform duration-200 ${editorState.ingredientsWrap ? 'scale-100 animate-in zoom-in-50' : 'scale-0'}`} />
+                              </button>
+                            </div>
+                            <div className="space-y-3 pt-1 border-t border-[#faf6f2]">
+                              <CustomSlider label="Horizontal Position X" value={editorState.ingredientsX} min={0} max={100} unit="%" snapValue={50} snapThreshold={3} onChange={(val) => handleStateChange('ingredientsX', val)} />
+                              <CustomSlider label="Vertical Position Y" value={editorState.ingredientsY} min={0} max={100} unit="%" snapValue={50} snapThreshold={3} onChange={(val) => handleStateChange('ingredientsY', val)} />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Preset Share Panel */}
+                      <PresetSharePanel editorState={editorState} setEditorState={setEditorState} showAlert={showAlert} />
+                    </div>
                   </>
-                </div>
+                )}
 
               </div>
             )}
