@@ -50,6 +50,30 @@ export interface LabelState {
   isTemplateBaseMode: boolean;
   activeBaseName: string;
   viewMode: 'single' | 'sheet';
+  titleFontStyle?: 'normal' | 'italic';
+  subtitleFontWeight?: 'normal' | 'bold';
+  subtitleFontStyle?: 'normal' | 'italic';
+  ingredientsFontWeight?: 'normal' | 'bold';
+  ingredientsFontStyle?: 'normal' | 'italic';
+  titleAccentType?: 'none' | 'sideLines' | 'divider';
+  titleAccentStyle?: 'angledDown' | 'angledUp' | 'straight' | 'solid' | 'dashed' | 'double' | 'pizazz';
+  titleAccentSeverity?: 'mild' | 'normal' | 'steep';
+  subtitleAccentType?: 'none' | 'divider';
+  subtitleAccentStyle?: 'solid' | 'dashed' | 'double' | 'pizazz';
+  detailsSideLinesEnabled?: boolean;
+  detailsSideLinesStyle?: 'angledDown' | 'angledUp' | 'straight';
+  detailsSideLinesAlign?: 'top' | 'middle' | 'bottom';
+  detailsSideLinesSeverity?: 'mild' | 'normal' | 'steep';
+  detailsDividerEnabled?: boolean;
+  detailsDividerStyle?: 'solid' | 'dashed' | 'double' | 'pizazz';
+  detailsOrnamentEnabled?: boolean;
+  detailsOrnamentStyle?: 'star' | 'dot' | 'flankingDots' | 'bottomFlourish';
+  borderEnabled?: boolean;
+  borderStyle?: 'thin' | 'double' | 'dashed' | 'thick' | 'doubleRing' | 'softRing' | 'corners';
+  accentColor?: string;
+  accentWeight?: 'thin' | 'medium' | 'thick';
+  ingredientsWidthPercent?: number;
+  ingredientsAutoFit?: boolean;
 }
 
 export interface SavedDesign {

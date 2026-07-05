@@ -49,9 +49,9 @@ export default function StudioCanvas({
   useEffect(() => {
     let active = true;
     const checkFont = async () => {
-      const titleSpec = `${state.titleFontWeight || 'normal'} 16px "${state.titleFont}"`;
-      const subtitleSpec = `normal 16px "${state.subtitleFont}"`;
-      const ingredientsSpec = `normal 16px "${state.ingredientsFont}"`;
+      const titleSpec = `${state.titleFontStyle || 'normal'} ${state.titleFontWeight || 'normal'} 16px "${state.titleFont}"`;
+      const subtitleSpec = `${state.subtitleFontStyle || 'normal'} ${state.subtitleFontWeight || 'normal'} 16px "${state.subtitleFont}"`;
+      const ingredientsSpec = `${state.ingredientsFontStyle || 'normal'} ${state.ingredientsFontWeight || 'normal'} 16px "${state.ingredientsFont}"`;
 
       try {
         await Promise.all([
@@ -77,7 +77,17 @@ export default function StudioCanvas({
       active = false;
       document.fonts.removeEventListener('loadingdone', handleLoaded);
     };
-  }, [state.titleFont, state.subtitleFont, state.ingredientsFont, state.titleFontWeight]);
+  }, [
+    state.titleFont, 
+    state.subtitleFont, 
+    state.ingredientsFont, 
+    state.titleFontWeight,
+    state.titleFontStyle,
+    state.subtitleFontWeight,
+    state.subtitleFontStyle,
+    state.ingredientsFontWeight,
+    state.ingredientsFontStyle
+  ]);
 
   // Redraw hook
   useEffect(() => {

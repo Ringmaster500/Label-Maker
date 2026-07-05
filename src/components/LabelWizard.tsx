@@ -563,7 +563,31 @@ const PresetSharePanel = ({
       ingredientsAlign: editorState.ingredientsAlign,
       ingredientsWrap: editorState.ingredientsWrap,
       ingredientsLineHeight: editorState.ingredientsLineHeight,
-      bgColor: editorState.bgColor
+      bgColor: editorState.bgColor,
+      titleFontStyle: editorState.titleFontStyle,
+      subtitleFontWeight: editorState.subtitleFontWeight,
+      subtitleFontStyle: editorState.subtitleFontStyle,
+      ingredientsFontWeight: editorState.ingredientsFontWeight,
+      ingredientsFontStyle: editorState.ingredientsFontStyle,
+      titleAccentType: editorState.titleAccentType,
+      titleAccentStyle: editorState.titleAccentStyle,
+      titleAccentSeverity: editorState.titleAccentSeverity,
+      subtitleAccentType: editorState.subtitleAccentType,
+      subtitleAccentStyle: editorState.subtitleAccentStyle,
+      detailsSideLinesEnabled: editorState.detailsSideLinesEnabled,
+      detailsSideLinesStyle: editorState.detailsSideLinesStyle,
+      detailsSideLinesAlign: editorState.detailsSideLinesAlign,
+      detailsSideLinesSeverity: editorState.detailsSideLinesSeverity,
+      detailsDividerEnabled: editorState.detailsDividerEnabled,
+      detailsDividerStyle: editorState.detailsDividerStyle,
+      detailsOrnamentEnabled: editorState.detailsOrnamentEnabled,
+      detailsOrnamentStyle: editorState.detailsOrnamentStyle,
+      borderEnabled: editorState.borderEnabled,
+      borderStyle: editorState.borderStyle,
+      accentColor: editorState.accentColor,
+      accentWeight: editorState.accentWeight,
+      ingredientsWidthPercent: editorState.ingredientsWidthPercent,
+      ingredientsAutoFit: editorState.ingredientsAutoFit
     };
     const json = JSON.stringify(preset);
     navigator.clipboard.writeText(json).then(() => {
@@ -859,6 +883,8 @@ const PRESETS = [
   }
 ];
 
+
+
 const DEFAULT_STATE: LabelState = {
   templateId: '22807',
   bgColor: '#ffffff',
@@ -894,7 +920,31 @@ const DEFAULT_STATE: LabelState = {
   showSafetyZone: true,
   isTemplateBaseMode: false,
   activeBaseName: '',
-  viewMode: 'single'
+  viewMode: 'single',
+  titleFontStyle: 'normal',
+  subtitleFontWeight: 'normal',
+  subtitleFontStyle: 'normal',
+  ingredientsFontWeight: 'normal',
+  ingredientsFontStyle: 'normal',
+  titleAccentType: 'none',
+  titleAccentStyle: 'angledDown',
+  titleAccentSeverity: 'normal',
+  subtitleAccentType: 'none',
+  subtitleAccentStyle: 'solid',
+  detailsSideLinesEnabled: false,
+  detailsSideLinesStyle: 'angledDown',
+  detailsSideLinesAlign: 'middle',
+  detailsSideLinesSeverity: 'normal',
+  detailsDividerEnabled: false,
+  detailsDividerStyle: 'solid',
+  detailsOrnamentEnabled: false,
+  detailsOrnamentStyle: 'star',
+  borderEnabled: false,
+  borderStyle: 'thin',
+  accentColor: '#000000',
+  accentWeight: 'thin',
+  ingredientsWidthPercent: 82,
+  ingredientsAutoFit: true
 };
 
 export default function LabelWizard({
@@ -920,7 +970,6 @@ export default function LabelWizard({
   // Design panel active sub-tab (mobile)
   const [designTab, setDesignTab] = useState<'background' | 'text'>('background');
 
-  // Aesthetic presets collapsed state
   const [presetsOpen, setPresetsOpen] = useState(false);
   
   // Loading indicators
@@ -1413,6 +1462,41 @@ export default function LabelWizard({
                           </div>
                         )}
                       </div>
+
+                      {/* Outline Border Options */}
+                      <div className="bg-[#faf6f2] border border-[#e2d6c9] p-4 rounded-2xl shadow-sm space-y-3.5 mt-4">
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs font-bold text-[#3c2f2f] uppercase tracking-wider">Outer Border Frame</label>
+                          <button 
+                            type="button" 
+                            onClick={() => handleStateChange('borderEnabled', !editorState.borderEnabled)} 
+                            className={`w-9 h-5 rounded-full p-0.5 transition-colors cursor-pointer outline-none focus:outline-none ${editorState.borderEnabled ? 'bg-[#dfa283]' : 'bg-[#e2d6c9]'}`}
+                          >
+                            <div className={`w-4 h-4 rounded-full bg-white transition-transform duration-200 transform ${editorState.borderEnabled ? 'translate-x-4' : 'translate-x-0'}`} />
+                          </button>
+                        </div>
+                        {editorState.borderEnabled && (
+                          <div className="space-y-3 pt-3 border-t border-[#e2d6c9]/50">
+                            <div>
+                              <label className="block text-[10px] font-semibold text-[#6d5c5a] mb-1">Border Style</label>
+                              <select 
+                                value={editorState.borderStyle || 'thin'} 
+                                onChange={(e) => handleStateChange('borderStyle', e.target.value as any)} 
+                                className="w-full bg-white border border-[#e2d6c9] rounded-lg px-2 py-1.5 text-xs text-[#3c2f2f] focus:outline-none cursor-pointer"
+                              >
+                                <option value="thin">Thin Border</option>
+                                <option value="double">Double Border</option>
+                                <option value="dashed">Dashed Border</option>
+                                <option value="thick">Thick Border</option>
+                                <option value="doubleRing">Double Ring Outline</option>
+                                <option value="softRing">Soft Inner Ring</option>
+                                <option value="corners">Retro Corners (Rect templates)</option>
+                              </select>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
                     </div>
 
                     {/* Divider (desktop only) */}
@@ -1442,6 +1526,36 @@ export default function LabelWizard({
                         )}
                       </div>
 
+                      {/* Unified Flare Styling */}
+                      <div className="bg-white border border-[#e2d6c9] p-4 rounded-xl shadow-sm space-y-3">
+                        <div className="grid grid-cols-2 gap-3.5">
+                          <CustomColorPicker 
+                            label="Unified Accent Color" 
+                            value={editorState.accentColor || '#000000'} 
+                            onChange={(val) => handleStateChange('accentColor', val)} 
+                          />
+                          <div>
+                            <label className="block text-[10px] font-semibold text-[#6d5c5a] mb-1">Unified Line Weight</label>
+                            <div className="flex bg-[#faf6f2] rounded-lg border border-[#e2d6c9] p-0.5 shadow-sm">
+                              {(['thin', 'medium', 'thick'] as const).map(w => (
+                                <button 
+                                  key={w} 
+                                  type="button" 
+                                  onClick={() => handleStateChange('accentWeight', w)} 
+                                  className={`flex-1 py-1.5 rounded text-[10px] font-bold capitalize transition-all cursor-pointer ${
+                                    (editorState.accentWeight || 'thin') === w 
+                                      ? 'bg-[#dfa283] text-white shadow-sm' 
+                                      : 'text-[#6d5c5a] hover:text-[#3c2f2f]'
+                                  }`}
+                                >
+                                  {w}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
                       {/* 1. Title Layer */}
                       <div className="space-y-3 bg-white border border-[#e2d6c9] p-4 rounded-xl shadow-sm">
                         <div className="flex items-center justify-between">
@@ -1458,12 +1572,21 @@ export default function LabelWizard({
                             </div>
                             <div className="grid grid-cols-2 gap-2">
                               <FontSelector label="Font Family" value={editorState.titleFont} onChange={(val) => handleStateChange('titleFont', val)} />
-                              <div>
-                                <label className="block text-[10px] font-semibold text-[#6d5c5a] mb-1">Weight</label>
-                                <select value={editorState.titleFontWeight} onChange={(e) => handleStateChange('titleFontWeight', e.target.value as any)} className="w-full bg-white border border-[#e2d6c9] rounded-lg px-2 py-1.5 text-xs text-[#3c2f2f] focus:outline-none cursor-pointer">
-                                  <option value="normal">Normal</option>
-                                  <option value="bold">Bold</option>
-                                </select>
+                              <div className="grid grid-cols-2 gap-1.5">
+                                <div>
+                                  <label className="block text-[10px] font-semibold text-[#6d5c5a] mb-1">Weight</label>
+                                  <select value={editorState.titleFontWeight} onChange={(e) => handleStateChange('titleFontWeight', e.target.value as any)} className="w-full bg-white border border-[#e2d6c9] rounded-lg px-1.5 py-1.5 text-[11px] text-[#3c2f2f] focus:outline-none cursor-pointer">
+                                    <option value="normal">Normal</option>
+                                    <option value="bold">Bold</option>
+                                  </select>
+                                </div>
+                                <div>
+                                  <label className="block text-[10px] font-semibold text-[#6d5c5a] mb-1">Style</label>
+                                  <select value={editorState.titleFontStyle || 'normal'} onChange={(e) => handleStateChange('titleFontStyle', e.target.value as any)} className="w-full bg-white border border-[#e2d6c9] rounded-lg px-1.5 py-1.5 text-[11px] text-[#3c2f2f] focus:outline-none cursor-pointer">
+                                    <option value="normal">Plain</option>
+                                    <option value="italic">Italic</option>
+                                  </select>
+                                </div>
                               </div>
                             </div>
                             <div className="grid grid-cols-2 gap-2">
@@ -1473,6 +1596,89 @@ export default function LabelWizard({
                             <div className="space-y-3 pt-1 border-t border-[#faf6f2]">
                               <CustomSlider label="Horizontal Position X" value={editorState.titleX} min={0} max={100} unit="%" snapValue={50} snapThreshold={3} onChange={(val) => handleStateChange('titleX', val)} />
                               <CustomSlider label="Vertical Position Y" value={editorState.titleY} min={0} max={100} unit="%" snapValue={50} snapThreshold={3} onChange={(val) => handleStateChange('titleY', val)} />
+                            </div>
+
+                            {/* Title Flare Options */}
+                            <div className="space-y-3.5 pt-3.5 border-t border-[#f4ebe1]">
+                              <div>
+                                <label className="block text-[10px] font-bold text-[#6d5c5a] uppercase tracking-wider mb-2">Title Accent / Flare</label>
+                                <select 
+                                  value={editorState.titleAccentType || 'none'} 
+                                  onChange={(e) => handleStateChange('titleAccentType', e.target.value as any)} 
+                                  className="w-full bg-[#faf6f2] border border-[#e2d6c9] rounded-lg px-2.5 py-1.5 text-xs text-[#3c2f2f] focus:outline-none cursor-pointer"
+                                >
+                                  <option value="none">No Accent</option>
+                                  <option value="sideLines">Flanking Side Lines</option>
+                                  <option value="divider">Underline Divider</option>
+                                </select>
+                              </div>
+                              {editorState.titleAccentType === 'sideLines' && (
+                                <div className="p-3 bg-[#faf6f2]/60 rounded-lg border border-[#e2d6c9] space-y-3">
+                                  <div>
+                                    <label className="block text-[9px] font-semibold text-[#6d5c5a] mb-1">Side Lines Direction</label>
+                                    <div className="flex bg-white rounded-lg border border-[#e2d6c9] p-0.5 shadow-sm">
+                                      {(['angledDown', 'angledUp', 'straight'] as const).map(style => {
+                                        const labelMap = {
+                                          angledDown: 'Angle Down',
+                                          angledUp: 'Angle Up',
+                                          straight: 'Straight'
+                                        };
+                                        return (
+                                          <button 
+                                            key={style} 
+                                            type="button" 
+                                            onClick={() => handleStateChange('titleAccentStyle', style)} 
+                                            className={`flex-1 py-1 rounded text-[9px] font-bold transition-all cursor-pointer ${
+                                              (editorState.titleAccentStyle || 'angledDown') === style 
+                                                ? 'bg-[#dfa283] text-white shadow-sm' 
+                                                : 'text-[#6d5c5a] hover:text-[#3c2f2f]'
+                                            }`}
+                                          >
+                                            {labelMap[style]}
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+
+                                  {((editorState.titleAccentStyle || 'angledDown') === 'angledDown' || editorState.titleAccentStyle === 'angledUp') && (
+                                    <div className="space-y-1">
+                                      <label className="block text-[9px] font-semibold text-[#6d5c5a] mb-1">Angle Severity</label>
+                                      <div className="flex bg-white rounded-lg border border-[#e2d6c9] p-0.5 shadow-sm">
+                                        {(['mild', 'normal', 'steep'] as const).map(sev => (
+                                          <button 
+                                            key={sev} 
+                                            type="button" 
+                                            onClick={() => handleStateChange('titleAccentSeverity', sev)} 
+                                            className={`flex-1 py-1 rounded text-[9px] font-bold capitalize transition-all cursor-pointer ${
+                                              (editorState.titleAccentSeverity || 'normal') === sev 
+                                                ? 'bg-[#dfa283] text-white shadow-sm' 
+                                                : 'text-[#6d5c5a] hover:text-[#3c2f2f]'
+                                            }`}
+                                          >
+                                            {sev}
+                                          </button>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                              {editorState.titleAccentType === 'divider' && (
+                                <div className="p-3 bg-[#faf6f2]/60 rounded-lg border border-[#e2d6c9] space-y-2">
+                                  <label className="block text-[9px] font-semibold text-[#6d5c5a]">Divider Style</label>
+                                  <select 
+                                    value={editorState.titleAccentStyle || 'solid'} 
+                                    onChange={(e) => handleStateChange('titleAccentStyle', e.target.value as any)} 
+                                    className="w-full bg-white border border-[#e2d6c9] rounded-lg px-2 py-1 text-[11px] text-[#3c2f2f] focus:outline-none cursor-pointer"
+                                  >
+                                    <option value="solid">Solid Line</option>
+                                    <option value="dashed">Dashed Line</option>
+                                    <option value="double">Double Line</option>
+                                    <option value="pizazz">Pizazz (Diamond Accent)</option>
+                                  </select>
+                                </div>
+                              )}
                             </div>
                           </div>
                         )}
@@ -1494,14 +1700,60 @@ export default function LabelWizard({
                             </div>
                             <div className="grid grid-cols-2 gap-2">
                               <FontSelector label="Font Family" value={editorState.subtitleFont} onChange={(val) => handleStateChange('subtitleFont', val)} />
-                              <CustomSlider label="Font Size" value={editorState.subtitleSize} min={6} max={36} unit="pt" onChange={(val) => handleStateChange('subtitleSize', val)} />
+                              <div className="grid grid-cols-2 gap-1.5">
+                                <div>
+                                  <label className="block text-[10px] font-semibold text-[#6d5c5a] mb-1">Weight</label>
+                                  <select value={editorState.subtitleFontWeight || 'normal'} onChange={(e) => handleStateChange('subtitleFontWeight', e.target.value as any)} className="w-full bg-white border border-[#e2d6c9] rounded-lg px-1.5 py-1.5 text-[11px] text-[#3c2f2f] focus:outline-none cursor-pointer">
+                                    <option value="normal">Normal</option>
+                                    <option value="bold">Bold</option>
+                                  </select>
+                                </div>
+                                <div>
+                                  <label className="block text-[10px] font-semibold text-[#6d5c5a] mb-1">Style</label>
+                                  <select value={editorState.subtitleFontStyle || 'normal'} onChange={(e) => handleStateChange('subtitleFontStyle', e.target.value as any)} className="w-full bg-white border border-[#e2d6c9] rounded-lg px-1.5 py-1.5 text-[11px] text-[#3c2f2f] focus:outline-none cursor-pointer">
+                                    <option value="normal">Plain</option>
+                                    <option value="italic">Italic</option>
+                                  </select>
+                                </div>
+                              </div>
                             </div>
                             <div className="grid grid-cols-2 gap-2">
                               <CustomColorPicker label="Text Color" value={editorState.subtitleColor} onChange={(val) => handleStateChange('subtitleColor', val)} />
+                              <CustomSlider label="Font Size" value={editorState.subtitleSize} min={6} max={36} unit="pt" onChange={(val) => handleStateChange('subtitleSize', val)} />
                             </div>
                             <div className="space-y-3 pt-1 border-t border-[#faf6f2]">
                               <CustomSlider label="Horizontal Position X" value={editorState.subtitleX} min={0} max={100} unit="%" snapValue={50} snapThreshold={3} onChange={(val) => handleStateChange('subtitleX', val)} />
                               <CustomSlider label="Vertical Position Y" value={editorState.subtitleY} min={0} max={100} unit="%" snapValue={50} snapThreshold={3} onChange={(val) => handleStateChange('subtitleY', val)} />
+                            </div>
+
+                            {/* Subtitle Accent Options */}
+                            <div className="space-y-3.5 pt-3.5 border-t border-[#f4ebe1]">
+                              <div>
+                                <label className="block text-[10px] font-bold text-[#6d5c5a] uppercase tracking-wider mb-2">Subtitle Accent / Flare</label>
+                                <select 
+                                  value={editorState.subtitleAccentType || 'none'} 
+                                  onChange={(e) => handleStateChange('subtitleAccentType', e.target.value as any)} 
+                                  className="w-full bg-[#faf6f2] border border-[#e2d6c9] rounded-lg px-2.5 py-1.5 text-xs text-[#3c2f2f] focus:outline-none cursor-pointer"
+                                >
+                                  <option value="none">No Accent</option>
+                                  <option value="divider">Underline Divider</option>
+                                </select>
+                              </div>
+                              {editorState.subtitleAccentType === 'divider' && (
+                                <div className="p-3 bg-[#faf6f2]/60 rounded-lg border border-[#e2d6c9] space-y-2">
+                                  <label className="block text-[9px] font-semibold text-[#6d5c5a]">Divider Style</label>
+                                  <select 
+                                    value={editorState.subtitleAccentStyle || 'solid'} 
+                                    onChange={(e) => handleStateChange('subtitleAccentStyle', e.target.value as any)} 
+                                    className="w-full bg-white border border-[#e2d6c9] rounded-lg px-2 py-1 text-[11px] text-[#3c2f2f] focus:outline-none cursor-pointer"
+                                  >
+                                    <option value="solid">Solid Line</option>
+                                    <option value="dashed">Dashed Line</option>
+                                    <option value="double">Double Line</option>
+                                    <option value="pizazz">Pizazz (Diamond Accent)</option>
+                                  </select>
+                                </div>
+                              )}
                             </div>
                           </div>
                         )}
@@ -1523,6 +1775,24 @@ export default function LabelWizard({
                             </div>
                             <div className="grid grid-cols-2 gap-2">
                               <FontSelector label="Font Family" value={editorState.ingredientsFont} onChange={(val) => handleStateChange('ingredientsFont', val)} />
+                              <div className="grid grid-cols-2 gap-1.5">
+                                <div>
+                                  <label className="block text-[10px] font-semibold text-[#6d5c5a] mb-1">Weight</label>
+                                  <select value={editorState.ingredientsFontWeight || 'normal'} onChange={(e) => handleStateChange('ingredientsFontWeight', e.target.value as any)} className="w-full bg-white border border-[#e2d6c9] rounded-lg px-1.5 py-1.5 text-[11px] text-[#3c2f2f] focus:outline-none cursor-pointer">
+                                    <option value="normal">Normal</option>
+                                    <option value="bold">Bold</option>
+                                  </select>
+                                </div>
+                                <div>
+                                  <label className="block text-[10px] font-semibold text-[#6d5c5a] mb-1">Style</label>
+                                  <select value={editorState.ingredientsFontStyle || 'normal'} onChange={(e) => handleStateChange('ingredientsFontStyle', e.target.value as any)} className="w-full bg-white border border-[#e2d6c9] rounded-lg px-1.5 py-1.5 text-[11px] text-[#3c2f2f] focus:outline-none cursor-pointer">
+                                    <option value="normal">Plain</option>
+                                    <option value="italic">Italic</option>
+                                  </select>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
                               <div>
                                 <label className="block text-[10px] font-semibold text-[#6d5c5a] mb-1">Alignment</label>
                                 <div className="flex bg-[#faf6f2] rounded-lg border border-[#e2d6c9] p-0.5">
@@ -1533,23 +1803,160 @@ export default function LabelWizard({
                                   ))}
                                 </div>
                               </div>
-                            </div>
-                            <div className="grid grid-cols-2 gap-2">
                               <CustomColorPicker label="Text Color" value={editorState.ingredientsColor} onChange={(val) => handleStateChange('ingredientsColor', val)} />
-                              <CustomSlider label="Font Size" value={editorState.ingredientsSize} min={4} max={20} unit="pt" onChange={(val) => handleStateChange('ingredientsSize', val)} />
                             </div>
                             <div className="grid grid-cols-2 gap-2">
+                              <CustomSlider label="Font Size" value={editorState.ingredientsSize} min={4} max={20} unit="pt" onChange={(val) => handleStateChange('ingredientsSize', val)} />
                               <CustomSlider label="Line Height" value={editorState.ingredientsLineHeight} min={1.0} max={2.5} step={0.1} unit="x" onChange={(val) => handleStateChange('ingredientsLineHeight', val)} />
                             </div>
-                            <div className="flex items-center justify-between py-1.5 px-2 bg-[#faf6f2] rounded-lg border border-[#e2d6c9]">
-                              <label className="text-[11px] font-semibold text-[#6d5c5a] select-none">Auto-Wrap Details Text</label>
-                              <button type="button" onClick={() => handleStateChange('ingredientsWrap', !editorState.ingredientsWrap)} className={`w-4.5 h-4.5 rounded-md border flex items-center justify-center transition-all cursor-pointer focus:outline-none ${editorState.ingredientsWrap ? 'bg-[#dfa283] border-[#dfa283] text-white shadow-sm shadow-[#dfa283]/20' : 'bg-white border-[#e2d6c9] text-transparent hover:border-[#dfa283]/60'}`}>
-                                <Check className={`w-3 h-3 stroke-[3.5px] transition-transform duration-200 ${editorState.ingredientsWrap ? 'scale-100 animate-in zoom-in-50' : 'scale-0'}`} />
-                              </button>
+                            
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between py-1.5 px-2 bg-[#faf6f2] rounded-lg border border-[#e2d6c9]">
+                                <label className="text-[11px] font-semibold text-[#6d5c5a] select-none">Auto-Wrap Details Text</label>
+                                <button type="button" onClick={() => handleStateChange('ingredientsWrap', !editorState.ingredientsWrap)} className={`w-4.5 h-4.5 rounded-md border flex items-center justify-center transition-all cursor-pointer focus:outline-none ${editorState.ingredientsWrap ? 'bg-[#dfa283] border-[#dfa283] text-white shadow-sm shadow-[#dfa283]/20' : 'bg-white border-[#e2d6c9] text-transparent hover:border-[#dfa283]/60'}`}>
+                                  <Check className={`w-3 h-3 stroke-[3.5px] transition-transform duration-200 ${editorState.ingredientsWrap ? 'scale-100 animate-in zoom-in-50' : 'scale-0'}`} />
+                                </button>
+                              </div>
+
+                              {editorState.ingredientsWrap && (
+                                <div className="space-y-3.5 p-3.5 bg-[#faf6f2]/60 rounded-xl border border-[#e2d6c9]/60 space-y-3 mt-1.5">
+                                  <CustomSlider 
+                                    label="Wrap Width" 
+                                    value={editorState.ingredientsWidthPercent ?? 82} 
+                                    min={10} 
+                                    max={100} 
+                                    unit="%" 
+                                    snapValue={82} 
+                                    snapThreshold={3} 
+                                    onChange={(val) => handleStateChange('ingredientsWidthPercent', val)} 
+                                  />
+                                  <div className="flex items-center justify-between border-t border-[#e2d6c9]/40 pt-2.5 mt-1">
+                                    <label className="text-[10px] font-semibold text-[#6d5c5a] select-none">Auto-Fit to Shape (Circle/Oval)</label>
+                                    <button type="button" onClick={() => handleStateChange('ingredientsAutoFit', !editorState.ingredientsAutoFit)} className={`w-4.5 h-4.5 rounded border flex items-center justify-center transition-all cursor-pointer focus:outline-none ${editorState.ingredientsAutoFit ?? true ? 'bg-[#dfa283] border-[#dfa283] text-white' : 'bg-white border-[#e2d6c9] text-transparent'}`}>
+                                      <Check className="w-3 h-3 stroke-[4px]" />
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
                             </div>
+
                             <div className="space-y-3 pt-1 border-t border-[#faf6f2]">
                               <CustomSlider label="Horizontal Position X" value={editorState.ingredientsX} min={0} max={100} unit="%" snapValue={50} snapThreshold={3} onChange={(val) => handleStateChange('ingredientsX', val)} />
                               <CustomSlider label="Vertical Position Y" value={editorState.ingredientsY} min={0} max={100} unit="%" snapValue={50} snapThreshold={3} onChange={(val) => handleStateChange('ingredientsY', val)} />
+                            </div>
+
+                            {/* Details Flares & Ornaments */}
+                            <div className="space-y-3 pt-3.5 border-t border-[#f4ebe1]">
+                              <label className="block text-[10px] font-bold text-[#6d5c5a] uppercase tracking-wider">Details Accent / Ornaments</label>
+                              
+                              {/* Flanking Side Lines */}
+                              <div className="space-y-2.5 p-3 bg-[#faf6f2]/50 rounded-xl border border-[#e2d6c9]">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[11px] font-semibold text-[#3c2f2f]">Flanking Side Lines</span>
+                                  <button 
+                                    type="button" 
+                                    onClick={() => handleStateChange('detailsSideLinesEnabled', !editorState.detailsSideLinesEnabled)} 
+                                    className={`w-8 h-4.5 rounded-full p-0.5 transition-colors cursor-pointer outline-none focus:outline-none ${editorState.detailsSideLinesEnabled ? 'bg-[#dfa283]' : 'bg-[#e2d6c9]'}`}
+                                  >
+                                    <div className={`w-3.5 h-3.5 rounded-full bg-white transition-transform duration-200 transform ${editorState.detailsSideLinesEnabled ? 'translate-x-3.5' : 'translate-x-0'}`} />
+                                  </button>
+                                </div>
+                                {editorState.detailsSideLinesEnabled && (
+                                  <div className="space-y-3 pt-2 border-t border-[#e2d6c9]/40">
+                                    <div className="grid grid-cols-2 gap-2.5">
+                                      <div>
+                                        <label className="block text-[9px] font-semibold text-[#6d5c5a] mb-1">Line Style</label>
+                                        <select value={editorState.detailsSideLinesStyle || 'angledDown'} onChange={(e) => handleStateChange('detailsSideLinesStyle', e.target.value as any)} className="w-full bg-white border border-[#e2d6c9] rounded-lg px-1.5 py-1 text-[10px] text-[#3c2f2f] focus:outline-none cursor-pointer">
+                                          <option value="angledDown">Angled Down</option>
+                                          <option value="angledUp">Angled Up</option>
+                                          <option value="straight">Straight</option>
+                                        </select>
+                                      </div>
+                                      <div>
+                                        <label className="block text-[9px] font-semibold text-[#6d5c5a] mb-1">Vertical Focus</label>
+                                        <select value={editorState.detailsSideLinesAlign || 'middle'} onChange={(e) => handleStateChange('detailsSideLinesAlign', e.target.value as any)} className="w-full bg-white border border-[#e2d6c9] rounded-lg px-1.5 py-1 text-[10px] text-[#3c2f2f] focus:outline-none cursor-pointer">
+                                          <option value="top">Top 1/3</option>
+                                          <option value="middle">Middle</option>
+                                          <option value="bottom">Bottom 1/3</option>
+                                        </select>
+                                      </div>
+                                    </div>
+
+                                    {((editorState.detailsSideLinesStyle || 'angledDown') === 'angledDown' || editorState.detailsSideLinesStyle === 'angledUp') && (
+                                      <div>
+                                        <label className="block text-[9px] font-semibold text-[#6d5c5a] mb-1">Angle Severity</label>
+                                        <div className="flex bg-white rounded-lg border border-[#e2d6c9] p-0.5 shadow-sm">
+                                          {(['mild', 'normal', 'steep'] as const).map(sev => (
+                                            <button 
+                                              key={sev} 
+                                              type="button" 
+                                              onClick={() => handleStateChange('detailsSideLinesSeverity', sev)} 
+                                              className={`flex-1 py-1 rounded text-[9px] font-bold capitalize transition-all cursor-pointer ${
+                                                (editorState.detailsSideLinesSeverity || 'normal') === sev 
+                                                  ? 'bg-[#dfa283] text-white shadow-sm' 
+                                                  : 'text-[#6d5c5a] hover:text-[#3c2f2f]'
+                                              }`}
+                                            >
+                                              {sev}
+                                            </button>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Top Divider Line */}
+                              <div className="space-y-2.5 p-3 bg-[#faf6f2]/50 rounded-xl border border-[#e2d6c9]">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[11px] font-semibold text-[#3c2f2f]">Top Divider Line</span>
+                                  <button 
+                                    type="button" 
+                                    onClick={() => handleStateChange('detailsDividerEnabled', !editorState.detailsDividerEnabled)} 
+                                    className={`w-8 h-4.5 rounded-full p-0.5 transition-colors cursor-pointer outline-none focus:outline-none ${editorState.detailsDividerEnabled ? 'bg-[#dfa283]' : 'bg-[#e2d6c9]'}`}
+                                  >
+                                    <div className={`w-3.5 h-3.5 rounded-full bg-white transition-transform duration-200 transform ${editorState.detailsDividerEnabled ? 'translate-x-3.5' : 'translate-x-0'}`} />
+                                  </button>
+                                </div>
+                                {editorState.detailsDividerEnabled && (
+                                  <div className="pt-2 border-t border-[#e2d6c9]/40">
+                                    <label className="block text-[9px] font-semibold text-[#6d5c5a] mb-1">Divider Style</label>
+                                    <select value={editorState.detailsDividerStyle || 'solid'} onChange={(e) => handleStateChange('detailsDividerStyle', e.target.value as any)} className="w-full bg-white border border-[#e2d6c9] rounded-lg px-1.5 py-1 text-[10px] text-[#3c2f2f] focus:outline-none cursor-pointer">
+                                      <option value="solid">Solid Line</option>
+                                      <option value="dashed">Dashed Line</option>
+                                      <option value="double">Double Line</option>
+                                      <option value="pizazz">Pizazz (Diamond Accent)</option>
+                                    </select>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Center Ornament */}
+                              <div className="space-y-2.5 p-3 bg-[#faf6f2]/50 rounded-xl border border-[#e2d6c9]">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[11px] font-semibold text-[#3c2f2f]">Details Ornament</span>
+                                  <button 
+                                    type="button" 
+                                    onClick={() => handleStateChange('detailsOrnamentEnabled', !editorState.detailsOrnamentEnabled)} 
+                                    className={`w-8 h-4.5 rounded-full p-0.5 transition-colors cursor-pointer outline-none focus:outline-none ${editorState.detailsOrnamentEnabled ? 'bg-[#dfa283]' : 'bg-[#e2d6c9]'}`}
+                                  >
+                                    <div className={`w-3.5 h-3.5 rounded-full bg-white transition-transform duration-200 transform ${editorState.detailsOrnamentEnabled ? 'translate-x-3.5' : 'translate-x-0'}`} />
+                                  </button>
+                                </div>
+                                {editorState.detailsOrnamentEnabled && (
+                                  <div className="pt-2 border-t border-[#e2d6c9]/40">
+                                    <label className="block text-[9px] font-semibold text-[#6d5c5a] mb-1">Ornament Style</label>
+                                    <select value={editorState.detailsOrnamentStyle || 'star'} onChange={(e) => handleStateChange('detailsOrnamentStyle', e.target.value as any)} className="w-full bg-white border border-[#e2d6c9] rounded-lg px-1.5 py-1 text-[10px] text-[#3c2f2f] focus:outline-none cursor-pointer">
+                                      <option value="star">Center Star (Above)</option>
+                                      <option value="dot">Center Dot (Above)</option>
+                                      <option value="flankingDots">Flanking Dots (Side)</option>
+                                      <option value="bottomFlourish">Bottom Chevron (Below)</option>
+                                    </select>
+                                  </div>
+                                )}
+                              </div>
+
                             </div>
                           </div>
                         )}
