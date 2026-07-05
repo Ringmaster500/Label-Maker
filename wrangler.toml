@@ -6,8 +6,8 @@ JWT_SECRET = "local-secret-key-1234567890-qwertyuiop-super-long"
 
 [[kv_namespaces]]
 binding = "AUTO_LABELS_KV"
-id = "auto-labels-kv-local"
+id = "499933a246354e9fb7ebe13b684ae7d3"
 
 [[r2_buckets]]
 binding = "AUTO_LABELS_R2"
-bucket_name = "auto-labels-r2-local"
+bucket_name = "auto-labels-r2"
